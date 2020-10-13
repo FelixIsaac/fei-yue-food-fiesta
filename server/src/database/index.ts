@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 
-export default mongoose.connect("mongodb://localhost:27017/feiyue", {
+export default mongoose.connect(process.env.MONGODB_CONNECTION as string, {
     "useNewUrlParser": true,
     "useUnifiedTopology": true,
     "useCreateIndex": true,
