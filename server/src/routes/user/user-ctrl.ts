@@ -95,16 +95,17 @@ export const updatePhone  = async (userID: IUser["_id"], newPhone: IUser["phone"
 };
 
 export const login = async (emailOrPhone: IUser["email"] | IUser["phone"], password: IUser["password"]) => {
-    try {
-        const user = await UserModel.findOne().byEmailOrPhone(emailOrPhone);
-        if (!user) throw "Invalid email or phone, and password";
-        // @ts-ignore
-        if (!await user.comparePassword(password)) throw "Invalid email or phone, and password";
+    const user = await UserModel.findOne().byEmailOrPhone(emailOrPhone);
+    if (!user) throw "Invalid email or phone, and password";
+    if (!await user.comparePassword(password)) throw "Invalid email or phone, and password";
 
-        return handleSuccess("Correct credentials");
-    } catch (err) {
-        return handleError(err);
-    }
+    return jwt.sign({
+        "fullName": user.fullName,
+        "admin": user.admin,
+        "userID": user._id
+    }, process.env.JWT_ENCRYPTION_SECRET as string, {
+        "expiresIn": 1.21e+9 // 2 weeks
+    });
 };
 
 // export const removeAccount = async ()

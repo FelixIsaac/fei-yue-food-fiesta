@@ -36,6 +36,8 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
 
                     reply.send(handleSuccess(response));
                     return;
+                }
+                case "email": {
                     const response = await userController.updateEmail(
                       request.params.userID,
                       request.body.email,
@@ -75,6 +77,42 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
+    server.post<{
+        Body: { email: IUser["email"]; password: IUser["password"]; };
+    }>("/login", loginSchema, async (request, reply) => {
+        try {
+            reply.setCookie("token", await userController.login(request.body.email, request.body.password), {
+                "domain": process.env.DOMAIN,
+                "path": "/",
+                "signed": true,
+                "expires": new Date(Date.now() + 1.21e+9), // 2 weeks
+                "httpOnly": true,
+                "sameSite": true,
+                "secure": process.env.NODE_ENV === "production"
+            });
+
+            reply.send(handleSuccess("Logged in"));
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+
+    server.delete<{
+        Params: { userID: IUser["_id"]; };
+    }>("/:userID", {}, async (request ,reply) => {
+        try {
+            const response = await userController.deleteUser(
+              request.params.userID,
+              reply.unsignCookie(request.cookies.token) as string
+            );
+
+            reply.send(handleSuccess(response))
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    });
 
     server.post("/login", loginSchema, async (request:Omit<FastifyRequest, 'body'> & { body: RequestBody }, reply) =>{
         const  response = await userController.login(request.body.email as string, request.body.password as string);
