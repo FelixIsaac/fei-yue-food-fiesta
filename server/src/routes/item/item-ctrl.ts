@@ -88,3 +88,19 @@ export const editItemImage = async (itemID: IItem["_id"], newImage: IItem["image
     return "Update item image";
 };
 
+export const updateItemStock = async (itemID: IItem["_id"], stock: IItem["stock"], authorization: string) => {
+    if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
+
+    const user =  await getUser(authorization);
+    if (!user) throw "Unauthorized to perform this action";
+
+    await CategoryModel.findOneAndUpdate({
+        "items._id": itemID
+    }, {
+        "$set": {
+            "items.$.stock": stock
+        }
+    });
+
+    return "Updated item stock";
+};

@@ -91,3 +91,23 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
+    server.put<{
+        Params: { category: ICategory["_id"]; item: IItem["_id"];};
+        Body: { stock: number };
+    }>("/:category/:item", {}, async (request, reply) => {
+       try {
+           const response = await itemController.updateItemStock(
+             request.params.item,
+             request.body.stock,
+             reply.unsignCookie(request.cookies.token) as string
+           );
+
+           reply.send(handleSuccess(response));
+       } catch (err) {
+           const response = handleError(err);
+           reply.status(response.statusCode).send(response);
+       }
+    });
+
+    next();
+});
