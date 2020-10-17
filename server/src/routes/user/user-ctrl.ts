@@ -92,6 +92,12 @@ export const updatePhone  = async (userID: IUser["_id"], newPhone: IUser["phone"
     return "Updated user phone number";
 };
 
+export const deleteUser = async (userID: IUser["_id"], authorization: string) => {
+    const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
+    if (!JWTPayload.admin) throw "Unauthorized to perform this action";
+
+    await UserModel.findByIdAndRemove(userID);
+    return "Deleted user";
 };
 
 export const login = async (emailOrPhone: IUser["email"] | IUser["phone"], password: IUser["password"]) => {
