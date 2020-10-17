@@ -1,6 +1,6 @@
-import { Document, DocumentQuery, Schema, Model, model, HookNextFunction } from "mongoose";
+import { Document, DocumentQuery, HookNextFunction, model, Model, Schema } from "mongoose";
 import isEmail from "validator/lib/isEmail";
-import isMobilePhone  from "validator/lib/isMobilePhone";
+import isMobilePhone from "validator/lib/isMobilePhone";
 import isURL from "validator/lib/isURL";
 import { compare, hash } from "bcrypt";
 import uniqueValidator from "mongoose-unique-validator";
@@ -21,10 +21,11 @@ export interface IUser extends Document {
 
 export interface IUserModel extends Model<IUser, typeof queryHelpers> {
     fullName: string;
-    comparePassword(password: IUser["password"]): boolean;
     _id: Schema.Types.ObjectId;
     createdAt: Date;
     editedAt: Date;
+
+    comparePassword(password: IUser["password"]): boolean;
 }
 
 export interface IUserJWTToken {
@@ -33,7 +34,7 @@ export interface IUserJWTToken {
     userID: IUserModel["_id"]
 }
 
-const validatePassword  = (password: IUser["password"], user_inputs: string[] = [], next: HookNextFunction) => {
+const validatePassword = (password: IUser["password"], user_inputs: string[] = [], next: HookNextFunction) => {
     try {
         if (
           !/(?=^.{8,}$)(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\s).*$/
@@ -52,7 +53,7 @@ const validatePassword  = (password: IUser["password"], user_inputs: string[] = 
     }
 };
 
-export const userSchema =  new Schema({
+export const userSchema = new Schema({
     "avatar": {
         "type": String,
         "validate": {
@@ -114,19 +115,19 @@ userSchema.index({
 });
 
 userSchema.virtual("fullName")
-  .get(function(this: { firstName: IUser["firstName"], lastName: IUser["lastName"] }) {
+  .get(function (this: { firstName: IUser["firstName"], lastName: IUser["lastName"] }) {
       return [this.firstName, this.lastName].join(" ");
   })
-  .set(function(this: { firstName: IUser["firstName"], lastName: IUser["lastName"] }, v: string) {
-      this.firstName = v.substr(0, v.indexOf(' '));
-      this.lastName = v.substr(v.indexOf(' ') + 1);
+  .set(function (this: { firstName: IUser["firstName"], lastName: IUser["lastName"] }, v: string) {
+      this.firstName = v.substr(0, v.indexOf(" "));
+      this.lastName = v.substr(v.indexOf(" ") + 1);
   });
 
 userSchema.methods.comparePassword = async function (password: IUser["password"]) {
-    return await compare(password, this.password)
-}
+    return await compare(password, this.password);
+};
 
-userSchema.pre<IUser & IUserModel>("save", async function( next) {
+userSchema.pre<IUser & IUserModel>("save", async function (next) {
     if (this.isModified("password")) {
         validatePassword(
           this.password,
@@ -172,10 +173,10 @@ async function updateDocument(this: any, next: HookNextFunction) {
     // }
 }
 
-const queryHelpers  = {
-    byEmail: function(this: DocumentQuery<any, IUser>, email: IUser["email"]) {return this.find({ "email": email })},
-    byPhone: function(this: DocumentQuery<any, IUser>, phone: IUser["phone"]) {return this.where({ "phone": phone })},
-    byEmailOrPhone: function(this: DocumentQuery<any, IUser>, emailOrPhone: IUser["email"] | IUser["phone"]) {
+const queryHelpers = {
+    byEmail: function (this: DocumentQuery<any, IUser>, email: IUser["email"]) {return this.find({ "email": email });},
+    byPhone: function (this: DocumentQuery<any, IUser>, phone: IUser["phone"]) {return this.where({ "phone": phone });},
+    byEmailOrPhone: function (this: DocumentQuery<any, IUser>, emailOrPhone: IUser["email"] | IUser["phone"]) {
         return this.where({ "$or": [{ "email": encrypt(emailOrPhone) }, { "phone": encrypt(emailOrPhone) }] });
     }
 };

@@ -17,5 +17,5 @@ export default mongoose.connect(process.env.MONGODB_CONNECTION as string, {
 
 fs.readdir(path.resolve(__dirname, "models"), (err, files) => {
     if (err) return console.error(err);
-    return files.forEach((file) =>  import(path.resolve(__dirname, "models", file)));
+    return files.forEach((file) => import(path.resolve(__dirname, "models", file)));
 });

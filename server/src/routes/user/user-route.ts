@@ -1,4 +1,4 @@
-import  { FastifyInstance, FastifyPluginOptions, FastifyError } from "fastify";
+import { FastifyError, FastifyInstance, FastifyPluginOptions } from "fastify";
 import * as userController from "./user-ctrl";
 import { IUser } from "../../database/models/UserModel";
 import { loginSchema, registerUser } from "./user-route-schema";
@@ -9,7 +9,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         try {
             await userController.createUser(request.body as Partial<IUser>);
             reply.send(handleSuccess("Registered user"));
-        }  catch (err) {
+        } catch (err) {
             const response = handleError(err);
             reply.status(response.statusCode).send(response);
         }
@@ -26,7 +26,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         };
     }>("/:userID/:action", {}, async (request, reply) => {
         try {
-            switch(request.params.action) {
+            switch (request.params.action) {
                 case "name": {
                     const response = await userController.updateName(
                       request.params.userID,
@@ -44,7 +44,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
                       reply.unsignCookie(request.cookies.token) as string
                     );
 
-                    reply.send(handleSuccess(response))
+                    reply.send(handleSuccess(response));
                     return;
                 }
                 case "password": {
@@ -54,7 +54,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
                       reply.unsignCookie(request.cookies.token) as string
                     );
 
-                    reply.send(handleSuccess(response))
+                    reply.send(handleSuccess(response));
                     return;
                 }
                 case "phone": {
@@ -64,7 +64,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
                       reply.unsignCookie(request.cookies.token) as string
                     );
 
-                    reply.send(handleSuccess(response))
+                    reply.send(handleSuccess(response));
                     return;
                 }
                 default:
@@ -100,14 +100,14 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
 
     server.delete<{
         Params: { userID: IUser["_id"]; };
-    }>("/:userID", {}, async (request ,reply) => {
+    }>("/:userID", {}, async (request, reply) => {
         try {
             const response = await userController.deleteUser(
               request.params.userID,
               reply.unsignCookie(request.cookies.token) as string
             );
 
-            reply.send(handleSuccess(response))
+            reply.send(handleSuccess(response));
         } catch (err) {
             const response = handleError(err);
             reply.status(response.statusCode).send(response);
@@ -117,33 +117,33 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     server.put<{
         Params: { userID: IUser["_id"]; }; Body: { items: IUser["items"]; };
     }>("/:userID/items", {}, async (request, reply) => {
-       try {
-           const response = await userController.updateItems(
-             request.params.userID,
-             request.body.items,
-             reply.unsignCookie(request.cookies.token) as string
-           );
+        try {
+            const response = await userController.updateItems(
+              request.params.userID,
+              request.body.items,
+              reply.unsignCookie(request.cookies.token) as string
+            );
 
-           reply.send(handleSuccess(response));
-       }  catch (err) {
-           const response = handleError(err);
-           reply.status(response.statusCode).send(response);
-       }
+            reply.send(handleSuccess(response));
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
     });
 
     server.get<{
         Params: { userID: IUser["_id"]; };
-    }>("/:userID/history", {}, async (request,  reply) => {
-       try {
+    }>("/:userID/history", {}, async (request, reply) => {
+        try {
             const response = await userController.viewHistory(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
             reply.send(handleSuccess("OK", 200, response));
-       } catch (err) {
-           const response = handleError(err);
-           reply.status(response.statusCode).send(response);
-       }
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
     });
 
-    server.get("/", async (request, reply) => userController.getUser(reply.unsignCookie(request.cookies.token) as string))
+    server.get("/", async (request, reply) => userController.getUser(reply.unsignCookie(request.cookies.token) as string));
 
     next();
 });

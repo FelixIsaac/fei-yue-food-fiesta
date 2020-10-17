@@ -36,7 +36,7 @@ export const updateName = async (
 
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     const user = await UserModel.findById(userID);
-    if (!user) throw "User not found"
+    if (!user) throw "User not found";
     if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
 
     user.firstName = firstName;
@@ -52,7 +52,7 @@ export const updateEmail = async (userID: IUser["_id"], newEmail: IUser["email"]
 
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     const user = await UserModel.findById(userID);
-    if (!user) throw "User not found"
+    if (!user) throw "User not found";
     if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
 
     user.email = newEmail;
@@ -67,7 +67,7 @@ export const updatePassword = async (userID: IUser["_id"], newPassword: IUser["p
 
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     const user = await UserModel.findById(userID);
-    if (!user) throw "User not found"
+    if (!user) throw "User not found";
     if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
 
     user.password = newPassword;
@@ -77,12 +77,12 @@ export const updatePassword = async (userID: IUser["_id"], newPassword: IUser["p
     return "Updated user password";
 };
 
-export const updatePhone  = async (userID: IUser["_id"], newPhone: IUser["phone"], authorization: string) => {
+export const updatePhone = async (userID: IUser["_id"], newPhone: IUser["phone"], authorization: string) => {
     if (!newPhone) throw "New phone required in request body";
 
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     const user = await UserModel.findById(userID);
-    if (!user) throw "User not found"
+    if (!user) throw "User not found";
     if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
 
     user.phone = newPhone;
@@ -117,17 +117,17 @@ export const login = async (emailOrPhone: IUser["email"] | IUser["phone"], passw
 export const updateItems = async (userID: IUser["_id"], items: IUser["items"], authorization: string) => {
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     const user = await UserModel.findById(userID);
-    if (!user) throw "User not found"
+    if (!user) throw "User not found";
     if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
     console.log(items);
     await UserModel.findByIdAndUpdate(userID, { "addToSet": { items } });
     return "Updated items";
-}
+};
 
 export const viewHistory = async (userID: IUser["_id"], authorization: string, page = 0) => {
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     const user = await UserModel.findById(userID);
-    if (!user) throw "User not found"
+    if (!user) throw "User not found";
     if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
 
     return user.history.slice(20 * page, 20 * (page + 1));

@@ -9,7 +9,7 @@ app.register(import("fastify-compress"));
 app.register(import("fastify-cors"));
 app.register(import("fastify-cookie"), { "secret": process.env.COOKIE_SESSION_SECRET });
 app.register(import("fastify-csrf"), { "cookieOpts": { "signed": true } });
-app.register(import("fastify-helmet"))
+app.register(import("fastify-helmet"));
 app.register(require("fastify-rate-limit"), { "max": 100, "timeWindow": "1 minute" });
 
 // routes
