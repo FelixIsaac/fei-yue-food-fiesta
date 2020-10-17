@@ -18,3 +18,22 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
+    server.post<{
+        Params: { category: ICategory["_id"]; };
+        Body: { name: string; image: string; };
+    }>("/:category", {}, async (request, reply) => {
+        try {
+            const response = await itemController.createItem(
+              request.params.category,
+              request.body.name,
+              request.body.image,
+              reply.unsignCookie(request.cookies.token) as string
+            );
+
+            reply.send(handleSuccess(response));
+        }  catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+

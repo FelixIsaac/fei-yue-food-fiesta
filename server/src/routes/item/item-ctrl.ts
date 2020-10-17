@@ -14,3 +14,28 @@ export const createCategory = async (name: ICategory["category"], authorization:
     return "Created category";
 };
 
+export const createItem = async (
+  categoryID: ICategory["_id"],
+  itemName: IItem["name"],
+  itemImage: IItem["image"],
+  authorization: string
+) => {
+    if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
+    if (!itemImage) throw  "Item image is required";
+
+    const user =  await getUser(authorization);
+    if (!user) throw "Unauthorized to perform this action";
+
+    await CategoryModel.findByIdAndUpdate(categoryID, {
+        "$addToSet": {
+             // @ts-ignore
+            "items": {
+                "name": itemName,
+                "image": itemImage
+            }
+        }
+    });
+
+    return "Created item";
+};
+
