@@ -1,7 +1,8 @@
-import  { FastifyInstance, FastifyPluginOptions, FastifyError } from "fastify";
+import { FastifyError, FastifyInstance, FastifyPluginOptions } from "fastify";
 import * as itemController from "./item-ctrl";
 import handleError, { handleSuccess } from "../../utils/handleError";
-import { ICategory, IItem } from "../../database/models/CategoryModel";
+import { ICategory } from "../../database/models/CategoryModel";
+import { IItem } from "../../database/models/ItemModel";
 
 export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (error?: FastifyError) => void) => {
     server.post<{ Body: { name: string}; }>("/", {}, async (request, reply) => {
@@ -12,7 +13,29 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
             );
 
             reply.send(handleSuccess(response));
-        }  catch (err) {
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+
+    server.get("/", {}, async (request, reply) => {
+        try {
+            const response = await itemController.getCategories(reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess("OK", 200, response));
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+
+    server.get<{
+        Params: { categoryID: ICategory["_id"]; };
+    }>("/:categoryID", {}, async (request, reply) => {
+        try {
+            const response = await itemController.getCategory(request.params.categoryID, reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess("OK", 200, response));
+        } catch (err) {
             const response = handleError(err);
             reply.status(response.statusCode).send(response);
         }
@@ -30,7 +53,12 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
             );
 
             reply.send(handleSuccess(response));
-        }  catch (err) {
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+
             const response = handleError(err);
             reply.status(response.statusCode).send(response);
         }
