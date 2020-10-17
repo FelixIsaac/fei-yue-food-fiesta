@@ -56,84 +56,68 @@ export const createItem = async (
     if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
     if (!itemImage) throw  "Item image is required";
 
-    const user =  await getUser(authorization);
+    const user = await getUser(authorization);
     if (!user) throw "Unauthorized to perform this action";
 
-    await CategoryModel.findByIdAndUpdate(categoryID, {
-        "$addToSet": {
-             // @ts-ignore
-            "items": {
-                "name": itemName,
-                "image": itemImage
-            }
-        }
-    });
+    const item = await new ItemModel({ "name": itemName, "image": itemImage, "category": categoryID }).save();
+    await CategoryModel.findByIdAndUpdate(categoryID, { "$addToSet": { "items": item._id } });
 
     return "Created item";
-};
-
-export const editCategoryName = async (categoryID: ICategory["_id"], newName: ICategory["category"], authorization: string) => {
-    if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
-
-    const user =  await getUser(authorization);
-    if (!user) throw "Unauthorized to perform this action";
-
-    await CategoryModel.findOneAndUpdate(categoryID, {
-        "$set": {
-            "category": newName
-        }
-    });
-
-    return "Updated category name";
 };
 
 export const editItemName = async (itemID: IItem["_id"], newName: IItem["name"], authorization: string) => {
     if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
 
-    const user =  await getUser(authorization);
+    const user = await getUser(authorization);
     if (!user) throw "Unauthorized to perform this action";
 
-    await CategoryModel.findOneAndUpdate({
-        "items._id": itemID
-    }, {
-        "$set": {
-            "items.$.name": newName
-        }
-    });
-
+    await ItemModel.findOneAndUpdate(itemID, { "$set": { "name": newName } });
     return "Updated item name";
 };
 
 export const editItemImage = async (itemID: IItem["_id"], newImage: IItem["image"], authorization: string) => {
     if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
 
-    const user =  await getUser(authorization);
+    const user = await getUser(authorization);
     if (!user) throw "Unauthorized to perform this action";
 
-    await CategoryModel.findOneAndUpdate({
-        "items._id": itemID
-    }, {
-        "$set": {
-            "items.$.image": newImage
-        }
-    });
-
+    await ItemModel.findOneAndUpdate(itemID, { "$set": { "image": newImage } });
     return "Update item image";
 };
 
 export const updateItemStock = async (itemID: IItem["_id"], stock: IItem["stock"], authorization: string) => {
     if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
 
-    const user =  await getUser(authorization);
+    const user = await getUser(authorization);
     if (!user) throw "Unauthorized to perform this action";
 
-    await CategoryModel.findOneAndUpdate({
-        "items._id": itemID
-    }, {
-        "$set": {
-            "items.$.stock": stock
-        }
-    });
-
+    await ItemModel.findOneAndUpdate(itemID, { "$set": { stock } });
     return "Updated item stock";
+};
+
+export const moveItem = async (itemID: IItem["_id"], newCategory: ICategory["_id"], authorization: string) => {
+    if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
+
+    const user = await getUser(authorization);
+    if (!user) throw "Unauthorized to perform this action";
+
+    const item = await ItemModel.findById(itemID);
+    if (!item) throw "Item not found";
+    if (item.category.toString() === newCategory) throw "Item already in this category";
+
+    await CategoryModel.findByIdAndUpdate(item.category, { "$pull": { "items": item._id } });
+    item.category = newCategory;
+    await item.save();
+
+    return "Moved category";
+};
+
+export const deleteItem = async (itemID: IItem["_id"], authorization: string) => {
+    if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
+
+    const user = await getUser(authorization);
+    if (!user) throw "Unauthorized to perform this action";
+
+    await ItemModel.findOneAndRemove(itemID);
+    return "Deleted item";
 };

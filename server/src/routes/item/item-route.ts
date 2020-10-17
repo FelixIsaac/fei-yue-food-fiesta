@@ -5,7 +5,7 @@ import { ICategory } from "../../database/models/CategoryModel";
 import { IItem } from "../../database/models/ItemModel";
 
 export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (error?: FastifyError) => void) => {
-    server.post<{ Body: { name: string}; }>("/", {}, async (request, reply) => {
+    server.post<{ Body: { name: string }; }>("/", {}, async (request, reply) => {
         try {
             const response = await itemController.createCategory(
               request.body.name,
@@ -84,7 +84,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
             );
 
             reply.send(handleSuccess(response));
-        }  catch (err) {
+        } catch (err) {
             const response = handleError(err);
             reply.status(response.statusCode).send(response);
         }
@@ -95,7 +95,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         Body: { name: string; image: string; };
     }>("/:category/:item/:action", {}, async (request, reply) => {
         try {
-            switch(request.params.action) {
+            switch (request.params.action) {
                 case "name": {
                     const response = await itemController.editItemName(
                       request.params.item,
@@ -120,28 +120,28 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
                     reply.callNotFound();
                     return;
             }
-        }  catch (err) {
+        } catch (err) {
             const response = handleError(err);
             reply.status(response.statusCode).send(response);
         }
     });
 
     server.put<{
-        Params: { category: ICategory["_id"]; item: IItem["_id"];};
+        Params: { category: ICategory["_id"]; item: IItem["_id"]; };
         Body: { stock: number };
     }>("/:category/:item", {}, async (request, reply) => {
-       try {
-           const response = await itemController.updateItemStock(
-             request.params.item,
-             request.body.stock,
-             reply.unsignCookie(request.cookies.token) as string
-           );
+        try {
+            const response = await itemController.updateItemStock(
+              request.params.item,
+              request.body.stock,
+              reply.unsignCookie(request.cookies.token) as string
+            );
 
-           reply.send(handleSuccess(response));
-       } catch (err) {
-           const response = handleError(err);
-           reply.status(response.statusCode).send(response);
-       }
+            reply.send(handleSuccess(response));
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
     });
 
     next();
