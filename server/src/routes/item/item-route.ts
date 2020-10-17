@@ -55,3 +55,39 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
+    server.patch<{
+        Params: { category: ICategory["_id"]; item: IItem["_id"]; action: string; };
+        Body: { name: string; image: string; };
+    }>("/:category/:item/:action", {}, async (request, reply) => {
+        try {
+            switch(request.params.action) {
+                case "name": {
+                    const response = await itemController.editItemName(
+                      request.params.item,
+                      request.body.name,
+                      reply.unsignCookie(request.cookies.token) as string
+                    );
+
+                    reply.send(handleSuccess(response));
+                    return;
+                }
+                case "image": {
+                    const response = await itemController.editItemImage(
+                      request.params.item,
+                      request.body.image,
+                      reply.unsignCookie(request.cookies.token) as string
+                    );
+
+                    reply.send(handleSuccess(response));
+                    return;
+                }
+                default:
+                    reply.callNotFound();
+                    return;
+            }
+        }  catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+
