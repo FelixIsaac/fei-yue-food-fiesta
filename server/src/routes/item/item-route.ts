@@ -18,6 +18,24 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
+    server.patch<{
+        Params: { category: ICategory["_id"]; };
+        Body: { name: string; };
+    }>("/:category", {}, async (request, reply) => {
+        try {
+            const response = await itemController.editCategoryName(
+              request.params.category,
+              request.body.name,
+              reply.unsignCookie(request.cookies.token) as string
+            );
+
+            reply.send(handleSuccess(response));
+        }  catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+
     server.post<{
         Params: { category: ICategory["_id"]; };
         Body: { name: string; image: string; };

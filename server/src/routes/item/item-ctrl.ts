@@ -39,3 +39,18 @@ export const createItem = async (
     return "Created item";
 };
 
+export const editCategoryName = async (categoryID: ICategory["_id"], newName: ICategory["category"], authorization: string) => {
+    if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
+
+    const user =  await getUser(authorization);
+    if (!user) throw "Unauthorized to perform this action";
+
+    await CategoryModel.findOneAndUpdate(categoryID, {
+        "$set": {
+            "category": newName
+        }
+    });
+
+    return "Updated category name";
+};
+
