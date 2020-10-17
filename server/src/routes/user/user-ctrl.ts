@@ -16,32 +16,82 @@ export const createUser = async (userObject: Partial<IUser>) => {
     return "Registered user";
 };
 
-export const createUser = async (userObject: Partial<IUser>) => {
-    try {
-        const user = new UserModel(userObject);
-        await user.validate();
-        await user.save();
-
-        return handleSuccess("Registered user");
-    } catch (err) {
-        return handleError(err);
-    }
+export const getUser = async (jwtToken: string) => {
+    const JWTPayload = <IUserJWTToken>jwt.verify(jwtToken, process.env.JWT_ENCRYPTION_SECRET as string);
+    return UserModel.findById(JWTPayload.userID)
+      .populate("items");
 };
 
-export const amend = async (userID: IUser["_id"], path: string, update: string) => {
-    try {
-        const user = await UserModel.findById(userID);
-        if (!user) throw "User not found";
-        if (!(path in user.toJSON())) throw "Not a path in user";
+export const isAdmin = async (jwtToken: string) => {
+    const JWTPayload = <IUserJWTToken>jwt.verify(jwtToken, process.env.JWT_ENCRYPTION_SECRET as string);
+    return JWTPayload.admin;
+};
 
-        // @ts-ignore
-        user[path] = update;
-        await user.validate();
-        await user.save();
-        return handleSuccess(`Updated ${path}`)
-    } catch (err) {
-        return handleError(err);
-    }
+export const updateName = async (
+  userID: IUser["_id"],
+  [firstName, lastName]: [IUser["firstName"], IUser["lastName"]],
+  authorization: string
+) => {
+    if (!firstName) throw "First name required in request body";
+
+    const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
+    const user = await UserModel.findById(userID);
+    if (!user) throw "User not found"
+    if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
+
+    user.firstName = firstName;
+    user.lastName = lastName;
+    await user.validate();
+    await user.save();
+
+    return "Updated name";
+};
+
+export const updateEmail = async (userID: IUser["_id"], newEmail: IUser["email"], authorization: string) => {
+    if (!newEmail) throw "New email required in request body";
+
+    const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
+    const user = await UserModel.findById(userID);
+    if (!user) throw "User not found"
+    if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
+
+    user.email = newEmail;
+    await user.validate();
+    await user.save();
+
+    return "Updated email address";
+};
+
+export const updatePassword = async (userID: IUser["_id"], newPassword: IUser["password"], authorization: string) => {
+    if (!newPassword) throw "New password required in request body";
+
+    const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
+    const user = await UserModel.findById(userID);
+    if (!user) throw "User not found"
+    if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
+
+    user.password = newPassword;
+    await user.validate();
+    await user.save();
+
+    return "Updated user password";
+};
+
+export const updatePhone  = async (userID: IUser["_id"], newPhone: IUser["phone"], authorization: string) => {
+    if (!newPhone) throw "New phone required in request body";
+
+    const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
+    const user = await UserModel.findById(userID);
+    if (!user) throw "User not found"
+    if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
+
+    user.phone = newPhone;
+    await user.validate();
+    await user.save();
+
+    return "Updated user phone number";
+};
+
 };
 
 export const login = async (emailOrPhone: IUser["email"] | IUser["phone"], password: IUser["password"]) => {
