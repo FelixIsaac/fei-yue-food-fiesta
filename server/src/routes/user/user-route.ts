@@ -114,10 +114,36 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
-    server.post("/login", loginSchema, async (request:Omit<FastifyRequest, 'body'> & { body: RequestBody }, reply) =>{
-        const  response = await userController.login(request.body.email as string, request.body.password as string);
-        return reply.status(response.statusCode).send(response);
+    server.put<{
+        Params: { userID: IUser["_id"]; }; Body: { items: IUser["items"]; };
+    }>("/:userID/items", {}, async (request, reply) => {
+       try {
+           const response = await userController.updateItems(
+             request.params.userID,
+             request.body.items,
+             reply.unsignCookie(request.cookies.token) as string
+           );
+
+           reply.send(handleSuccess(response));
+       }  catch (err) {
+           const response = handleError(err);
+           reply.status(response.statusCode).send(response);
+       }
     });
+
+    server.get<{
+        Params: { userID: IUser["_id"]; };
+    }>("/:userID/history", {}, async (request,  reply) => {
+       try {
+            const response = await userController.viewHistory(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess("OK", 200, response));
+       } catch (err) {
+           const response = handleError(err);
+           reply.status(response.statusCode).send(response);
+       }
+    });
+
+    server.get("/", async (request, reply) => userController.getUser(reply.unsignCookie(request.cookies.token) as string))
 
     next();
 });
