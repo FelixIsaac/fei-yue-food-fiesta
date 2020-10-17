@@ -2,6 +2,8 @@ export const registerUser = {
     "schema": {
         "body": {
             "type": "object",
+            "required": ["email", "password", "phone"],
+            "additionalProperties": false,
             "properties": {
                 "firstName": { "type": "string" },
                 "lastName": { "type": "string" },
@@ -9,20 +11,19 @@ export const registerUser = {
                 "phone": { "type": "string" },
                 "password": { "type": "string" }
             }
-        },
-        "required": ["email", "password", "phone"]
+        }
     }
-}
+};
 
 export const loginSchema = {
     "schema": {
         "body": {
             "type": "object",
+            "required": ["email", "password"],
             "properties": {
                 "email": { "type": "string" },
                 "password": { "type": "string" }
             }
-        },
-        "required": ["email", "password"]
+        }
     }
-}
+};

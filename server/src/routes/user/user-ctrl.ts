@@ -1,10 +1,19 @@
-import UserModel, { IUser, IUserModel } from "../../database/models/UserModel";
-import handleError, { handleSuccess } from "../../utils/handleError";
+import UserModel, { IUser, IUserJWTToken } from "../../database/models/UserModel";
+import jwt from "jsonwebtoken";
 
-export const isAdmin = async (userID: IUser["_id"]) => {
-    const user = (await UserModel.findById(userID))
-    if (!user) return false;
-    return user.admin;
+export const createUser = async (userObject: Partial<IUser>) => {
+    const user = new UserModel({
+        "firstName": userObject.firstName,
+        "lastName": userObject.lastName,
+        "email": userObject.email,
+        "phone": userObject.phone,
+        "password": userObject.password
+    });
+
+    await user.validate();
+    await user.save();
+
+    return "Registered user";
 };
 
 export const createUser = async (userObject: Partial<IUser>) => {

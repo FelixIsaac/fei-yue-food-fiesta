@@ -3,11 +3,11 @@ import isEmail from "validator/lib/isEmail";
 import isMobilePhone  from "validator/lib/isMobilePhone";
 import isURL from "validator/lib/isURL";
 import { compare, hash } from "bcrypt";
-import { encryption as encrypt, decryption as decrypt } from "../../utils/encryption";
+import uniqueValidator from "mongoose-unique-validator";
+import { decrypt, encrypt } from "../../utils/encryption";
 import zxcvbn from "zxcvbn";
 
 export interface IUser extends Document {
-    username: string;
     avatar: string;
     firstName: string;
     lastName: string;
@@ -15,6 +15,8 @@ export interface IUser extends Document {
     email: string;
     phone: string;
     password: string;
+    items: Schema.Types.ObjectId[];
+    history: string[][];
 }
 
 export interface IUserModel extends Model<IUser, typeof queryHelpers> {
@@ -23,6 +25,12 @@ export interface IUserModel extends Model<IUser, typeof queryHelpers> {
     _id: Schema.Types.ObjectId;
     createdAt: Date;
     editedAt: Date;
+}
+
+export interface IUserJWTToken {
+    fullName: IUserModel["fullName"];
+    admin: IUser["admin"];
+    userID: IUserModel["_id"]
 }
 
 const validatePassword  = (password: IUser["password"], user_inputs: string[] = [], next: HookNextFunction) => {
@@ -38,17 +46,13 @@ const validatePassword  = (password: IUser["password"], user_inputs: string[] = 
 
         if (score < 3) throw new Error(`Password is too weak\n${feedback}`);
         if (warning) throw new Error(`Password warning:\n${feedback}`);
+
     } catch (err) {
         next(err);
     }
 };
 
 export const userSchema =  new Schema({
-    "username": {
-        "type": String,
-        "minlength": [3, "Username length cannot be lower than 3"],
-        "maxlength": [32, "Username length cannot be higher than 32"]
-    },
     "avatar": {
         "type": String,
         "validate": {
@@ -65,7 +69,7 @@ export const userSchema =  new Schema({
     "email": {
         "type": String,
         "validate": {
-            "validator": isEmail,
+            "validator": (email: string) => isEmail(email) || isEmail(decrypt(email)),
             "message": "Invalid email address"
         },
         "required": [true, "Email address is necessary for account creation"],
@@ -74,7 +78,7 @@ export const userSchema =  new Schema({
     "phone": {
         "type": String,
         "validate": {
-            "validator": (phone: IUser["phone"]) => isMobilePhone(phone.toString(), "en-SG"),
+            "validator": (phone: IUser["phone"]) => isMobilePhone(phone, "en-SG") || isMobilePhone(decrypt(phone)),
             "message": "Invalid phone number"
         },
         "required": [true, "Phone number is necessary for account creation"],
@@ -83,38 +87,26 @@ export const userSchema =  new Schema({
     "password": {
         "type": String,
         "validator": {
-            "validator": validatePassword,
+            "validate": validatePassword,
             "message": "Password is insecure"
         },
         "required": [true, "Password is required for account creation"]
     },
     "items": {
-        "type": [String],
+        "type": [Schema.Types.ObjectId],
+        "validate": {
+            "validator": (items: IUser["items"]) => items.length <= 3,
+            "message": "Cannot select more than three items"
+        },
         "default": []
     },
     "history": {
-        "type": Array,
-        "default": [[String]]
+        "type": [[String]],
+        "default": []
     }
 }, {
     "timestamps": true,
 });
-
-const queryHelpers  = {
-    byEmail: function(this: DocumentQuery<any, IUser>, email: IUser["email"]) {return this.find({ "email": encrypt(email) })},
-    byPhone: function(this: DocumentQuery<any, IUser>, phone: IUser["phone"]) {return this.find({ "phone": encrypt(phone) })},
-    byEmailOrPhone: function(this: DocumentQuery<any, IUser>, emailOrPhone: IUser["email"] | IUser["phone"]) {
-        return this.find({
-            "$or": [{
-                "email": encrypt(emailOrPhone)
-            }, {
-                "phone": encrypt(emailOrPhone)
-            }]
-        });
-    }
-};
-
-userSchema.query = queryHelpers;
 
 userSchema.index({
     "email": -1,
@@ -135,71 +127,63 @@ userSchema.methods.comparePassword = async function (password: IUser["password"]
 }
 
 userSchema.pre<IUser & IUserModel>("save", async function( next) {
-    if (!this.isModified("password") || !this.isModified("email") || !this.isModified("phone"))
-        return next();
-
     if (this.isModified("password")) {
         validatePassword(
           this.password,
-          [this.username, this.firstName, this.lastName, this.fullName, decrypt(this.email)],
+          [this.firstName, this.lastName, this.fullName, this.email],
           next
         );
 
-        this.password = await hash(this.password, 16)
+        this.password = await hash(this.password, 16);
     }
 
     if (this.isModified("email")) this.email = encrypt(this.email);
-    if (this.isModified("phone")) this.phone = encrypt(this.phone.toString());
+    if (this.isModified("phone")) this.phone = encrypt(this.phone);
 
-    return next();
+    // TODO: send verification mail to  email -- Necessary?
 });
 
 async function updateDocument(this: any, next: HookNextFunction) {
-    const isModified = this._update.$set;
-    // ! use getFilter instead of getQuery
-    const docToUpdate = await this.model.findOne(this.getFilter());
-
-    if (!isModified.password || !isModified.email || !isModified.phone) return next();
-
-    try {
-        if (isModified.password) {
-            validatePassword(
-              isModified.password,
-              [this.username, this.firstName, this.lastName, this.fullName, decrypt(this.email)],
-              next
-            );
-
-            isModified.password = await hash(isModified.password, 16);
-        }
-
-        if (isModified.email) isModified.email = encrypt(isModified.email);
-        if (isModified.phone) isModified.phone = encrypt(isModified.phone);
-    } catch (err) {
-        console.error(err);
-        next();
-    }
+    console.log(2);
+    // const isModified = this._update.$set;
+    // // ! use getFilter instead of getQuery
+    // const docToUpdate = await this.model.findOne(this.getFilter());
+    //
+    // if (!isModified.password || !isModified.email || !isModified.phone) return next();
+    //
+    // try {
+    //     if (isModified.password) {
+    //         validatePassword(
+    //           isModified.password,
+    //           [this.firstName, this.lastName, this.fullName, decrypt(this.email)],
+    //           next
+    //         );
+    //
+    //         isModified.password = await hash(isModified.password, 16);
+    //     }
+    //
+    //     if (isModified.email) isModified.email = encrypt(isModified.email);
+    //     if (isModified.phone) isModified.phone = encrypt(isModified.phone);
+    //
+    //     return next();
+    // } catch (err) {
+    //     console.error(err);
+    //     return next();
+    // }
 }
 
-userSchema.pre<IUser & Document>("save", async function( next) {
-    if (!this.isModified("password"))
-        return next();
-
-    try {
-        // Check if quality of password is passable
-
-        validatePassword(this.password, [this.username, decrypt(this.email)], next);
-        this.password = await hash(this.password, 16);
-
-        next();
-        // TODO: Potential todo, verification email -- Necessary?
-        // this.verifiedEmail = false;
-    } catch (err) {
-        console.error(err);
-        next(err);
+const queryHelpers  = {
+    byEmail: function(this: DocumentQuery<any, IUser>, email: IUser["email"]) {return this.find({ "email": email })},
+    byPhone: function(this: DocumentQuery<any, IUser>, phone: IUser["phone"]) {return this.where({ "phone": phone })},
+    byEmailOrPhone: function(this: DocumentQuery<any, IUser>, emailOrPhone: IUser["email"] | IUser["phone"]) {
+        return this.where({ "$or": [{ "email": encrypt(emailOrPhone) }, { "phone": encrypt(emailOrPhone) }] });
     }
-});
+};
+
+userSchema.query = queryHelpers;
 
 userSchema.pre("update", updateDocument);
 userSchema.pre("updateOne", updateDocument);
+userSchema.plugin(uniqueValidator, { "message": "There's already an account registered with that {PATH}" });
 
 export default model<IUser, IUserModel>("users", userSchema);
