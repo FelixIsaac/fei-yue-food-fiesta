@@ -59,6 +59,13 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
+    server.delete<{
+        Params: { categoryID: ICategory["_id"]; };
+    }>("/:categoryID", {}, async (request, reply) => {
+        try {
+            const response = await itemController.deleteCategory(request.params.categoryID, reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess(response));
+        } catch (err) {
             const response = handleError(err);
             reply.status(response.statusCode).send(response);
         }
