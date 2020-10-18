@@ -1,7 +1,14 @@
 import { FastifyError, FastifyInstance, FastifyPluginOptions } from "fastify";
 import * as userController from "./user-ctrl";
 import { IUser } from "../../database/models/UserModel";
-import { loginSchema, registerUser } from "./user-route-schema";
+import {
+    amendUser,
+    deleteSchema,
+    getUserItemsHistorySchema,
+    loginSchema,
+    registerUser,
+    updateItemsSchema
+} from "./user-route-schema";
 import handleError, { handleSuccess } from "../../utils/handleError";
 
 export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (error?: FastifyError) => void) => {
@@ -24,7 +31,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
             password: IUser["password"];
             phone: IUser["phone"];
         };
-    }>("/:userID/:action", {}, async (request, reply) => {
+    }>("/:userID/:action", amendUser, async (request, reply) => {
         try {
             switch (request.params.action) {
                 case "name": {
@@ -100,7 +107,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
 
     server.delete<{
         Params: { userID: IUser["_id"]; };
-    }>("/:userID", {}, async (request, reply) => {
+    }>("/:userID", deleteSchema, async (request, reply) => {
         try {
             const response = await userController.deleteUser(
               request.params.userID,
@@ -116,7 +123,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
 
     server.put<{
         Params: { userID: IUser["_id"]; }; Body: { items: IUser["items"]; };
-    }>("/:userID/items", {}, async (request, reply) => {
+    }>("/:userID/items", updateItemsSchema, async (request, reply) => {
         try {
             const response = await userController.updateItems(
               request.params.userID,
@@ -133,7 +140,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
 
     server.get<{
         Params: { userID: IUser["_id"]; };
-    }>("/:userID/history", {}, async (request, reply) => {
+    }>("/:userID/history", getUserItemsHistorySchema, async (request, reply) => {
         try {
             const response = await userController.viewHistory(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
             reply.send(handleSuccess("OK", 200, response));
@@ -143,6 +150,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
+    // test
     server.get("/", async (request, reply) => userController.getUser(reply.unsignCookie(request.cookies.token) as string));
 
     next();
