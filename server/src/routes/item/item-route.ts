@@ -1,11 +1,17 @@
 import { FastifyError, FastifyInstance, FastifyPluginOptions } from "fastify";
 import * as itemController from "./item-ctrl";
 import handleError, { handleSuccess } from "../../utils/handleError";
+import {
+    createCategorySchema, createItemSchema,
+    deleteCategorySchema,
+    editCategoryNameSchema, editItemPropertiesSchema,
+    getCategorySchema, updateItemStockSchema
+} from "./item-route-schema";
 import { ICategory } from "../../database/models/CategoryModel";
 import { IItem } from "../../database/models/ItemModel";
 
 export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (error?: FastifyError) => void) => {
-    server.post<{ Body: { name: string }; }>("/", {}, async (request, reply) => {
+    server.post<{ Body: { name: string }; }>("/", createCategorySchema, async (request, reply) => {
         try {
             const response = await itemController.createCategory(
               request.body.name,
@@ -31,7 +37,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
 
     server.get<{
         Params: { categoryID: ICategory["_id"]; };
-    }>("/:categoryID", {}, async (request, reply) => {
+    }>("/:categoryID", getCategorySchema, async (request, reply) => {
         try {
             const response = await itemController.getCategory(request.params.categoryID, reply.unsignCookie(request.cookies.token) as string);
             reply.send(handleSuccess("OK", 200, response));
@@ -44,7 +50,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     server.patch<{
         Params: { category: ICategory["_id"]; };
         Body: { name: string; };
-    }>("/:category", {}, async (request, reply) => {
+    }>("/:category", editCategoryNameSchema, async (request, reply) => {
         try {
             const response = await itemController.editCategoryName(
               request.params.category,
@@ -61,7 +67,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
 
     server.delete<{
         Params: { categoryID: ICategory["_id"]; };
-    }>("/:categoryID", {}, async (request, reply) => {
+    }>("/:categoryID", deleteCategorySchema, async (request, reply) => {
         try {
             const response = await itemController.deleteCategory(request.params.categoryID, reply.unsignCookie(request.cookies.token) as string);
             reply.send(handleSuccess(response));
@@ -74,7 +80,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     server.post<{
         Params: { category: ICategory["_id"]; };
         Body: { name: string; image: string; };
-    }>("/:category", {}, async (request, reply) => {
+    }>("/:category", createItemSchema, async (request, reply) => {
         try {
             const response = await itemController.createItem(
               request.params.category,
@@ -93,7 +99,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     server.patch<{
         Params: { category: ICategory["_id"]; item: IItem["_id"]; action: string; };
         Body: { name: string; image: string; };
-    }>("/:category/:item/:action", {}, async (request, reply) => {
+    }>("/:category/:item/:action", editItemPropertiesSchema, async (request, reply) => {
         try {
             switch (request.params.action) {
                 case "name": {
@@ -129,7 +135,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     server.put<{
         Params: { category: ICategory["_id"]; item: IItem["_id"]; };
         Body: { stock: number };
-    }>("/:category/:item", {}, async (request, reply) => {
+    }>("/:category/:item", updateItemStockSchema, async (request, reply) => {
         try {
             const response = await itemController.updateItemStock(
               request.params.item,
