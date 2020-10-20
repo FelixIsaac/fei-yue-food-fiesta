@@ -1,0 +1,19 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "description": "Fei Yue Family Service Centre “Monthly Food Fiesta\" web management application",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FelixIsaac/fei-yue-food-fiesta.git"
+  },
+  "author": "https://felixisaac.dev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/FelixIsaac/fei-yue-food-fiesta/issues"
+  },
+  "homepage": "https://github.com/FelixIsaac/fei-yue-food-fiesta#readme"
+}
