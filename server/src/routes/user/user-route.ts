@@ -6,7 +6,7 @@ import {
     deleteSchema,
     getUserItemsHistorySchema,
     loginSchema,
-    registerUser,
+    registerUser, resetUserItemsSchema,
     updateItemsSchema
 } from "./user-route-schema";
 import handleError, { handleSuccess } from "../../utils/handleError";
@@ -93,14 +93,13 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
                 "path": "/",
                 "signed": true,
                 "expires": new Date(Date.now() + 1.21e+9), // 2 weeks
-                "httpOnly": true,
                 "sameSite": true,
                 "secure": process.env.NODE_ENV === "production"
             });
 
             reply.send(handleSuccess("Logged in"));
         } catch (err) {
-            const response = handleError(err);
+            const response = handleError(err, 401);
             reply.status(response.statusCode).send(response);
         }
     });
@@ -150,8 +149,27 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
-    // test
-    server.get("/", async (request, reply) => userController.getUser(reply.unsignCookie(request.cookies.token) as string));
+    server.delete<{
+        Params: { userID: IUser["_id"]; };
+    }>("/:userID/items", resetUserItemsSchema, async (request, reply) => {
+       try {
+           const response = await userController.resetItems(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
+           reply.send(handleSuccess(response));
+       } catch (err) {
+           const response = handleError(err);
+           reply.status(response.statusCode).send(response);
+       }
+    });
+
+    server.get("/", {}, async (request, reply) => {
+       try {
+           const response = await userController.getUser(reply.unsignCookie(request.cookies.token) as string);
+           reply.send(handleSuccess("OK", undefined, response));
+       }  catch (err) {
+           const response = handleError(err);
+           reply.status(response.statusCode).send(response);
+       }
+    });
 
     next();
 });

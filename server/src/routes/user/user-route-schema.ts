@@ -134,3 +134,14 @@ export const getUserItemsHistorySchema = {
         }
     }
 };
+
+export const resetUserItemsSchema = {
+    "schema": {
+        "params": {
+            "types": "object",
+            "properties": {
+                "userID": { "type": "string" }
+            }
+        }
+    }
+}
