@@ -5,10 +5,6 @@ import Login from "../views/Login";
 Vue.use(VueRouter)
 
 const routes: Array<RouteConfig> = [{
-  "path": "/login",
-  "name": "Login",
-  "component": Login
-}
   // {
   //   path: '/',
   //   name: 'Home',
