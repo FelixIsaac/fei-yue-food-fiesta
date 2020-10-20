@@ -16,7 +16,7 @@ export interface IUser extends Document {
     phone: string;
     password: string;
     items: Schema.Types.ObjectId[];
-    history: string[][];
+    history: Schema.Types.ObjectId[][];
 }
 
 export interface IUserModel extends Model<IUser, typeof queryHelpers> {

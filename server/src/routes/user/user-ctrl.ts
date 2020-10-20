@@ -119,9 +119,22 @@ export const updateItems = async (userID: IUser["_id"], items: IUser["items"], a
     const user = await UserModel.findById(userID);
     if (!user) throw "User not found";
     if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
-    console.log(items);
-    await UserModel.findByIdAndUpdate(userID, { "addToSet": { items } });
+
+    await UserModel.findByIdAndUpdate(userID, { "$set": { items } });
     return "Updated items";
+};
+
+export const resetItems = async (userID: IUser["_id"], authorization: string) => {
+    const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
+    if (!JWTPayload.admin) throw "Unauthorized to perform this action";
+    const user = await UserModel.findById(userID);
+    if (!user) throw "User not found";
+
+    user.history.push(user.items);
+    user.items = [];
+    await user.save();
+
+    return "Reset user items";
 };
 
 export const viewHistory = async (userID: IUser["_id"], authorization: string, page = 0) => {
