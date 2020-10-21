@@ -105,13 +105,18 @@ export const login = async (emailOrPhone: IUser["email"] | IUser["phone"], passw
     if (!user) throw "Invalid email or phone, and password";
     if (!await user.comparePassword(password)) throw "Invalid email or phone, and password";
 
-    return jwt.sign({
+    const payload = {
         "fullName": user.fullName,
         "admin": user.admin,
-        "userID": user._id
-    }, process.env.JWT_ENCRYPTION_SECRET as string, {
-        "expiresIn": 1.21e+9 // 2 weeks
-    });
+        "userID": user._id,
+        "avatar": user.avatar
+    };
+
+    return {
+        "token": jwt.sign(payload, process.env.JWT_ENCRYPTION_SECRET as string, {
+            "expiresIn": 1.21e+9 // 2 weeks
+        }), payload
+    };
 };
 
 export const updateItems = async (userID: IUser["_id"], items: IUser["items"], authorization: string) => {

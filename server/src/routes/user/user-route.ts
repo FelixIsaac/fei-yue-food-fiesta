@@ -88,16 +88,19 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         Body: { email: IUser["email"]; password: IUser["password"]; };
     }>("/login", loginSchema, async (request, reply) => {
         try {
-            reply.setCookie("token", await userController.login(request.body.email, request.body.password), {
+            const { token, payload } = await userController.login(request.body.email, request.body.password)
+
+            reply.setCookie("token", token, {
                 "domain": process.env.DOMAIN,
                 "path": "/",
                 "signed": true,
                 "expires": new Date(Date.now() + 1.21e+9), // 2 weeks
+                "httpOnly": true,
                 "sameSite": true,
                 "secure": process.env.NODE_ENV === "production"
             });
 
-            reply.send(handleSuccess("Logged in"));
+            reply.send(handleSuccess("Logged in", undefined, payload));
         } catch (err) {
             const response = handleError(err, 401);
             reply.status(response.statusCode).send(response);
@@ -161,15 +164,15 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
        }
     });
 
-    server.get("/", {}, async (request, reply) => {
-       try {
-           const response = await userController.getUser(reply.unsignCookie(request.cookies.token) as string);
-           reply.send(handleSuccess("OK", undefined, response));
-       }  catch (err) {
-           const response = handleError(err);
-           reply.status(response.statusCode).send(response);
-       }
-    });
+    server.get("/logout", {}, async (request, reply) => {
+        try {
+            reply.clearCookie("token");
+            reply.send(handleSuccess("Logged out"));
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    })
 
     next();
 });

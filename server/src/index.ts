@@ -6,7 +6,7 @@ require("./database");
 
 const app = fastify({ "logger": true });
 app.register(import("fastify-compress"));
-app.register(import("fastify-cors"));
+app.register(import("fastify-cors"), { origin: [process.env.FRONT_DOMAIN as string], credentials: true  });
 app.register(import("fastify-cookie"), { "secret": process.env.COOKIE_SESSION_SECRET });
 app.register(import("fastify-csrf"), { "cookieOpts": { "signed": true } });
 app.register(import("fastify-helmet"));
