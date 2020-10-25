@@ -98,7 +98,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
 
     server.patch<{
         Params: { category: ICategory["_id"]; item: IItem["_id"]; action: string; };
-        Body: { name: string; image: string; };
+        Body: { name: string; image: string; stock: IItem["stock"] };
     }>("/:category/:item/:action", editItemPropertiesSchema, async (request, reply) => {
         try {
             switch (request.params.action) {
@@ -122,6 +122,16 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
                     reply.send(handleSuccess(response));
                     return;
                 }
+                case "stock": {
+                    const response = await itemController.updateItemStock(
+                      request.params.item,
+                      request.body.stock,
+                      reply.unsignCookie(request.cookies.token) as string
+                    );
+
+                    reply.send(handleSuccess(response));
+                    return;
+                }
                 default:
                     reply.callNotFound();
                     return;
@@ -132,14 +142,30 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
+    server.delete<{
+        Params: { category: ICategory["_id"]; item: IItem["_id"]; };
+    }>("/:category/:item", deleteItemSchema, async (request, reply) => {
+        try {
+            const response = await itemController.deleteItem(
+              request.params.item,
+              reply.unsignCookie(request.cookies.token) as string
+            );
+
+            reply.send(handleSuccess(response));
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+
     server.put<{
         Params: { category: ICategory["_id"]; item: IItem["_id"]; };
-        Body: { stock: number };
+        Body: { category: string };
     }>("/:category/:item", updateItemStockSchema, async (request, reply) => {
         try {
-            const response = await itemController.updateItemStock(
+            const response = await itemController.moveItem(
               request.params.item,
-              request.body.stock,
+              request.body.category,
               reply.unsignCookie(request.cookies.token) as string
             );
 
