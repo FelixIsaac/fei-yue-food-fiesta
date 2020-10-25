@@ -17,3 +17,10 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.container {
+  margin-top: 3rem;
+  margin-bottom: 8rem;
+}
+</style>

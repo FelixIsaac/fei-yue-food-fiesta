@@ -1,10 +1,10 @@
 <template>
-  <b-navbar style="padding: 1.2rem;">
+  <b-navbar style="padding: 1.2rem;" mobile-burger shadow spaced close-on-click>
     <template slot="brand">
-      <b-navbar-item :to="{ path: '/' }" tag="router-link">
+      <b-navbar-item to="/" tag="router-link">
         <img
           alt="Fei Yue Family Service Centre 'Monthly Food Fiesta' web management application"
-          src="/favicon.ico"
+          src="/logo.png"
         />
       </b-navbar-item>
     </template>
