@@ -71,7 +71,7 @@ export const editItemName = async (itemID: IItem["_id"], newName: IItem["name"],
     const user = await getUser(authorization);
     if (!user) throw "Unauthorized to perform this action";
 
-    await ItemModel.findOneAndUpdate(itemID, { "$set": { "name": newName } });
+    await ItemModel.findByIdAndUpdate(itemID, { "$set": { "name": newName } });
     return "Updated item name";
 };
 
@@ -81,7 +81,7 @@ export const editItemImage = async (itemID: IItem["_id"], newImage: IItem["image
     const user = await getUser(authorization);
     if (!user) throw "Unauthorized to perform this action";
 
-    await ItemModel.findOneAndUpdate(itemID, { "$set": { "image": newImage } });
+    await ItemModel.findByIdAndUpdate(itemID, { "$set": { "image": newImage } });
     return "Update item image";
 };
 
@@ -90,8 +90,8 @@ export const updateItemStock = async (itemID: IItem["_id"], stock: IItem["stock"
 
     const user = await getUser(authorization);
     if (!user) throw "Unauthorized to perform this action";
-
-    await ItemModel.findOneAndUpdate(itemID, { "$set": { stock } });
+    console.log(itemID);
+    await ItemModel.findByIdAndUpdate(itemID, { "$set": { stock } });
     return "Updated item stock";
 };
 
@@ -118,6 +118,6 @@ export const deleteItem = async (itemID: IItem["_id"], authorization: string) =>
     const user = await getUser(authorization);
     if (!user) throw "Unauthorized to perform this action";
 
-    await ItemModel.findOneAndRemove(itemID);
+    await ItemModel.findByIdAndRemove(itemID);
     return "Deleted item";
 };
