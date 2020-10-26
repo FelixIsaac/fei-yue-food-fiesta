@@ -11,6 +11,10 @@ const routes: Array<RouteConfig> = [{
     "path": "/logout",
     "name": "Logout",
     "component": () => import("../components/Logout.vue")
+}, {
+    "path": "/stocks",
+    "name": "Stocks",
+    "component": () => import("../views/Stocks.vue")
 }];
 
 const router = new VueRouter({

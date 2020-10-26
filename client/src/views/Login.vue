@@ -1,5 +1,5 @@
 <template>
-  <section class="container" style="margin-top: 3rem; margin-bottom: 8rem;">
+  <section class="container">
     <form>
       <b-field label="Email or phone" label-position="on-border">
         <b-input

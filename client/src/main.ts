@@ -6,6 +6,5 @@ import store from "./store";
 import "./registerServiceWorker";
 import "buefy/dist/buefy.css";
 
-Vue.use(Buefy, { defaultIconComponent: "vue-fontawesome", defaultIconPack: "fas" });
-
+Vue.use(Buefy)
 new Vue({ router, store, render: h => h(App) }).$mount("#app");
