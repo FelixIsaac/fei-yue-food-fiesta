@@ -14,6 +14,7 @@
       <template v-if="user.admin && user.userID">
         <b-navbar-item tag="router-link" to="/stocks">Stocks</b-navbar-item>
         <b-navbar-item tag="router-link" to="/analytics">Analytics</b-navbar-item>
+        <b-navbar-item tag="router-link" to="/orders">Orders</b-navbar-item>
       </template>
     </template>
     <template slot="end">
