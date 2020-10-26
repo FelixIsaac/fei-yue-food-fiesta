@@ -5,7 +5,8 @@ import {
     createCategorySchema, createItemSchema,
     deleteCategorySchema,
     editCategoryNameSchema, editItemPropertiesSchema,
-    getCategorySchema, updateItemStockSchema
+    getCategorySchema, updateItemStockSchema,
+    deleteItemSchema
 } from "./item-route-schema";
 import { ICategory } from "../../database/models/CategoryModel";
 import { IItem } from "../../database/models/ItemModel";
@@ -86,6 +87,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
               request.params.category,
               request.body.name,
               request.body.image,
+              request.boyd.stock,
               reply.unsignCookie(request.cookies.token) as string
             );
 

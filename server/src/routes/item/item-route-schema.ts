@@ -72,6 +72,7 @@ export const editItemPropertiesSchema = {
     "schema": {
         "params": {
             "type": "object",
+            "required": ["category", "item", "action"],
             "properties": {
                 "category": { "type": "string" },
                 "item": { "type": "string" },
@@ -80,10 +81,10 @@ export const editItemPropertiesSchema = {
         },
         "body": {
             "type": "object",
-            "required": ["name", "image"],
             "properties": {
                 "name": { "type": "string" },
-                "image": { "type": "string" }
+                "image": { "type": "string" },
+                "stock": { "type": "number" }
             }
         }
     }
@@ -101,8 +102,12 @@ export const updateItemStockSchema = {
         "body": {
             "type": "object",
             "properties": {
-                "stock": { "type": "number" }
+                "category": { "type": "number" }
             }
         }
     }
+}
+
+export const deleteItemSchema = {
+
 }

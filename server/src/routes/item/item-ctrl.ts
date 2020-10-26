@@ -51,6 +51,7 @@ export const createItem = async (
   categoryID: ICategory["_id"],
   itemName: IItem["name"],
   itemImage: IItem["image"],
+  itemStock: IItem["stock"]
   authorization: string
 ) => {
     if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
@@ -59,7 +60,7 @@ export const createItem = async (
     const user = await getUser(authorization);
     if (!user) throw "Unauthorized to perform this action";
 
-    const item = await new ItemModel({ "name": itemName, "image": itemImage, "category": categoryID }).save();
+    const item = await new ItemModel({ "name": itemName, "image": itemImage, "category": categoryID, "stock": itemStock }).save();
     await CategoryModel.findByIdAndUpdate(categoryID, { "$addToSet": { "items": item._id } });
 
     return "Created item";
