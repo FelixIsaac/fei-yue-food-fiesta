@@ -15,7 +15,8 @@ const initUser = {
 
 export default new Vuex.Store({
     state: {
-        user: initUser
+        user: initUser,
+        itemCategories: []
     },
     plugins: [createPersistedState({
         paths: ["user"],
@@ -32,6 +33,9 @@ export default new Vuex.Store({
     mutations: {
         SET_USER(state, user = initUser) {
             state.user = user;
+        },
+        SET_ITEM_CATEGORIES(state, itemCategories) {
+            state.itemCategories = itemCategories;
         }
     },
     actions: {
@@ -47,6 +51,111 @@ export default new Vuex.Store({
         async logout({ commit }) {
             await axios.get(`${process.env.VUE_APP_BASE_API}/user/logout`, { withCredentials: true });
             commit("SET_USER");
+        },
+        async createNewCategory({ commit, dispatch }, { newCategory }) {
+            const response = await axios.post(
+              `${process.env.VUE_APP_BASE_API}/item`,
+              { name: newCategory.category, ...newCategory },
+              { withCredentials: true }
+            );
+
+            await dispatch("getItemCategories");
+            return response;
+        },
+        async getItemCategories({ commit }) {
+            const response = await axios.get(`${process.env.VUE_APP_BASE_API}/item`, { withCredentials: true });
+            commit("SET_ITEM_CATEGORIES", response.data.data);
+            return response;
+        },
+        async createNewItem({ commit, dispatch }, { newItem }) {
+            const response = await axios.post(
+              `${process.env.VUE_APP_BASE_API}/item/${newItem.category}`,
+              { ...newItem },
+              { withCredentials: true }
+            );
+
+            await dispatch("getItemCategories");
+            return response;
+        },
+        async updateItemName({ commit, state }, { category, item, name }) {
+            const response = await axios.patch(
+                `${process.env.VUE_APP_BASE_API}/item/${category}/${item}/name`, { name }, { withCredentials: true }
+            );
+
+            const updatedItemCategories = state.itemCategories;
+            const categoryObject = updatedItemCategories.find(({ _id }) => _id === category);
+
+            if (!categoryObject) return;
+            const itemObject = categoryObject.items.find(({ _id }: { _id: string }) => _id === item);
+            itemObject.name = name;
+
+            commit("SET_ITEM_CATEGORIES", updatedItemCategories);
+            return response;
+        },
+        async updateItemImage({ commit, state }, { category, item, image }) {
+            const response = await axios.patch(
+                `${process.env.VUE_APP_BASE_API}/item/${category}/${item}/image`, { image }, { withCredentials: true }
+            );
+
+            const updatedItemCategories = state.itemCategories;
+            const categoryObject = updatedItemCategories.find(({ _id }) => _id === category);
+
+            if (!categoryObject) return;
+            const itemObject = categoryObject.items.find(({ _id }: { _id: string }) => _id === item);
+            itemObject.image = image;
+
+            commit("SET_ITEM_CATEGORIES", updatedItemCategories);
+            return response;
+        },
+        async updateItemCategory({ commit, state }, { item, category, newCategory }) {
+            const response = await axios.put(
+                `${process.env.VUE_APP_BASE_API}/item/${category}/${item}`,
+                { category: newCategory },
+                { withCredentials: true }
+            );
+
+            const updatedItemCategories = state.itemCategories;
+            const categoryObject = updatedItemCategories.find(({ _id }) => _id === category);
+
+            if (!categoryObject) return;
+            const itemObject = categoryObject.items.find(({ _id }: { _id: string }) => _id === item);
+            itemObject.category = newCategory;
+
+            commit("SET_ITEM_CATEGORIES", updatedItemCategories);
+            return response;
+        },
+        async updateItemStock({ commit, state }, { category, item, stock }) {
+            const response = await axios.patch(
+              `${process.env.VUE_APP_BASE_API}/item/${category}/${item}/stock`,
+              { stock },
+              { withCredentials: true }
+            );
+
+            const updatedItemCategories = state.itemCategories;
+            const categoryObject = updatedItemCategories.find(({ _id }) => _id === category);
+
+            if (!categoryObject) return;
+            const itemObject = categoryObject.items.find(({ _id }: { _id: string }) => _id === item);
+            itemObject.stock = stock;
+
+            commit("SET_ITEM_CATEGORIES", updatedItemCategories);
+            return response;
+        },
+        async deleteItem({ commit, state }, { category, item }) {
+            const response = await axios.delete(
+              `${process.env.VUE_APP_BASE_API}/item/${category}/${item}`,
+              { withCredentials: true}
+            );
+
+            const updatedItemCategories = state.itemCategories;
+            const categoryObject = updatedItemCategories.find(({ _id }) => _id === category);
+
+            if (!categoryObject) return;
+            const itemIndex = categoryObject.items.findIndex(({ _id }: { _id: string }) => _id === item);
+            categoryObject.items.splice(itemIndex, 1);
+
+            commit("SET_ITEM_CATEGORIES", updatedItemCategories);
+            return response;
         }
     },
     modules: {}

@@ -101,8 +101,9 @@ export const updateItemStockSchema = {
         },
         "body": {
             "type": "object",
+            "required": ["category"],
             "properties": {
-                "category": { "type": "number" }
+                "category": { "type": "string" }
             }
         }
     }

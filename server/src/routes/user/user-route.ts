@@ -1,5 +1,7 @@
 import { FastifyError, FastifyInstance, FastifyPluginOptions } from "fastify";
 import * as userController from "./user-ctrl";
+import cookie from "cookie";
+import { unsign } from "cookie-signature";
 import { IUser } from "../../database/models/UserModel";
 import {
     amendUser,
@@ -172,7 +174,24 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
             const response = handleError(err);
             reply.status(response.statusCode).send(response);
         }
+    });
+
+    server.get("/qrcode", async (reply, request) => {
+        
     })
+
+    server.get('/', { websocket: true }, async (connection: any, request: any) => {
+        type data = String | Buffer | ArrayBuffer | Buffer[];
+        const { token: signedToken = "" } = cookie.parse(request.headers.cookie || "");
+        const token = unsign(signedToken, process.env.COOKIE_SESSION_SECRET as string);
+
+        if (!token)  return connection.socket.close(1015, "Unauthorized");;
+        if (!(await userController.isAdmin(token))) return connection.socket.close(1015, "Unauthorized");
+
+        connection.socket.on("error", (error: Error) => (
+          connection.socket.close(1015, "Unauthorized") && server.log.error(error)
+        ));
+    });
 
     next();
 });

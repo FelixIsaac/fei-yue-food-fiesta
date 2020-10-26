@@ -51,7 +51,7 @@ export const createItem = async (
   categoryID: ICategory["_id"],
   itemName: IItem["name"],
   itemImage: IItem["image"],
-  itemStock: IItem["stock"]
+  itemStock: IItem["stock"],
   authorization: string
 ) => {
     if (!await isAdmin(authorization)) throw "Unauthorized to perform this action";
