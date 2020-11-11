@@ -164,6 +164,39 @@ export default new Vuex.Store({
 
             commit("SET_ITEM_CATEGORIES", updatedItemCategories);
             return response;
+        },
+        async getUser() {
+            const response = await axios.get(
+              `${process.env.VUE_APP_BASE_API}/user/byToken`,
+              { withCredentials: true }
+            );
+
+            return response.data.data;
+        },
+        async editUser({ state, commit, dispatch }, { firstName, lastName, email, phone }) {
+            const responses = await Promise.all([
+              axios.patch(
+                `${process.env.VUE_APP_BASE_API}/user/${state.user.userID}/name`,
+                { firstName, lastName },
+                { withCredentials: true }
+              ),
+              axios.patch(
+                `${process.env.VUE_APP_BASE_API}/user/${state.user.userID}/phone`,
+                { phone },
+                { withCredentials: true }
+              ),
+              axios.patch(
+                `${process.env.VUE_APP_BASE_API}/user/${state.user.userID}/email`,
+                { email },
+                { withCredentials: true }
+              )
+            ]);
+
+            await this.dispatch("updateUser");
+            return responses.map(({ data }) => data);
+        },
+        async changeUserPassword({ state }, { oldPassword, password, confirmPassword }) {
+            if (password !== confirmPassword) return;
         }
     },
     modules: {}

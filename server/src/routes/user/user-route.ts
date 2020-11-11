@@ -109,6 +109,16 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
+    server.get("/byToken",async (request, reply) => {
+        try {
+            const updatedUser = await userController.getUser(reply.unsignCookie(request.cookies.token) as string, { decryptEmail: true, decryptPhone: true });
+            reply.send(handleSuccess("Got updated user", undefined, updatedUser));
+        } catch (err) {
+            const response = handleError(err, 401);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+
     server.get("/updatedUserFromLogin", async (request, reply) => {
         try {
             const updatedUser = await userController.getUser(reply.unsignCookie(request.cookies.token) as string);
