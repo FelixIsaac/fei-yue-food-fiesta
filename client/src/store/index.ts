@@ -60,6 +60,11 @@ export default new Vuex.Store({
 
             commit("SET_USER", response.data.data);
         },
+        async getItemCategories({ commit }) {
+            const response = await axios.get(`${process.env.VUE_APP_BASE_API}/item/categories`, { withCredentials: true });
+            commit("SET_ITEM_CATEGORIES", response.data.data);
+            return response;
+        },
         async createNewCategory({ commit, dispatch }, { newCategory }) {
             const response = await axios.post(
               `${process.env.VUE_APP_BASE_API}/item`,
@@ -68,11 +73,6 @@ export default new Vuex.Store({
             );
 
             await dispatch("getItemCategories");
-            return response;
-        },
-        async getItemCategories({ commit }) {
-            const response = await axios.get(`${process.env.VUE_APP_BASE_API}/item`, { withCredentials: true });
-            commit("SET_ITEM_CATEGORIES", response.data.data);
             return response;
         },
         async createNewItem({ commit, dispatch }, { newItem }) {

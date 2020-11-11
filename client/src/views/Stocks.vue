@@ -1,20 +1,27 @@
 <template>
   <section class="container">
-    <nav class="level-right">
-      <div class="level-item has-text-centered">
-        <div class="field is-grouped">
-          <p class="control">
-            <b-button class="is-success" @click="isNewItemModalActive = true">Add new item</b-button>
-          </p>
-          <p>
-            <b-button class="is-success" @click="isNewCategoryModalActive = true">Add new category</b-button>
-          </p>
-        </div>
-      </div>
-    </nav>
-    <div v-for="category in itemCategories" v-bind:key="category._id">
-      <Items :items="category.items" :category="category" show-admin-controls />
+    <div style="margin-bottom: 50px;">
+      <b-field label="Search items" label-position="on-border" grouped>
+        <b-input v-model="itemSearch" expanded icon="magnify"></b-input>
+        <p class="control">
+          <b-button class="is-success" @click="isNewItemModalActive = true">
+            Add new item
+          </b-button>
+        </p>
+        <p class="control">
+          <b-button class="is-success" @click="isNewCategoryModalActive = true">
+            Add new category
+          </b-button>
+        </p>
+      </b-field>
     </div>
+    <Items
+      :items="category.items"
+      :category="category"
+      show-admin-controls
+      v-for="category in filteredItems"
+      v-bind:key="category._id"
+    />
 
     <b-modal
       v-model="isNewItemModalActive"
@@ -45,17 +52,23 @@
               maxlength="80"
             ></b-input>
           </b-field>
-          <b-field label="Category" label-position="on-border" style="margin-bottom: 20px;">
+          <b-field
+            label="Category"
+            label-position="on-border"
+            style="margin-bottom: 20px;"
+          >
             <b-autocomplete
               field="category"
               open-on-focus
               clearable
               v-model="categorySearch"
               @select="option => (newItem.category = option._id)"
-              :data="filiteredCategories"
+              :data="filteredCategories"
             >
               <template slot="header">
-                <a @click="isNewCategoryModalActive = true"><span> Add new... </span></a>
+                <a @click="isNewCategoryModalActive = true"
+                  ><span> Add new... </span></a
+                >
               </template>
             </b-autocomplete>
           </b-field>
@@ -83,7 +96,9 @@
         </section>
         <footer class="modal-card-foot">
           <b-button @click="isNewItemModalActive = false">Cancel</b-button>
-          <b-button class="is-primary" @click="createNewItem()" :loading="loading">Add</b-button>
+          <b-button class="is-primary" @click="createNewItem" :loading="loading"
+            >Add</b-button
+          >
         </footer>
       </div>
     </b-modal>
@@ -119,7 +134,12 @@
         </section>
         <footer class="modal-card-foot">
           <b-button @click="isNewCategoryModalActive = false">Cancel</b-button>
-          <b-button class="is-primary" @click="createNewCategory()" :loading="loading">Add</b-button>
+          <b-button
+            class="is-primary"
+            @click="createNewCategory"
+            :loading="loading"
+            >Add</b-button
+          >
         </footer>
       </div>
     </b-modal>
@@ -132,11 +152,12 @@ import Component from "vue-class-component";
 import Items from "../components/Items.vue";
 
 @Component({ components: { Items } })
-export default class Counter extends Vue {
+export default class Stocks extends Vue {
   isNewItemModalActive = false;
   isNewCategoryModalActive = false;
   loading = false;
   categorySearch = "";
+  itemSearch = "";
 
   newItem = {
     name: "",
@@ -148,7 +169,7 @@ export default class Counter extends Vue {
   newCategory = {
     category: "",
     items: []
-  }
+  };
 
   async createNewCategory() {
     if (!this.newCategory.category) {
@@ -162,7 +183,9 @@ export default class Counter extends Vue {
 
     try {
       this.loading = true;
-      const response = await this.$store.dispatch("createNewCategory", { newCategory: this.newCategory });
+      const response = await this.$store.dispatch("createNewCategory", {
+        newCategory: this.newCategory
+      });
 
       this.isNewCategoryModalActive = false;
       this.loading = false;
@@ -177,10 +200,15 @@ export default class Counter extends Vue {
         type: "is-danger"
       });
     }
-  };
+  }
 
-  async createNewItem(e) {
-    if (!this.newItem.name || !this.newItem.image || !this.newItem.category || isNaN(this.newItem.stock)) {
+  async createNewItem() {
+    if (
+      !this.newItem.name ||
+      !this.newItem.image ||
+      !this.newItem.category ||
+      isNaN(this.newItem.stock)
+    ) {
       this.$buefy.toast.open({
         message: "Must have valid item name, image, category, and stock",
         type: "is-danger"
@@ -191,7 +219,9 @@ export default class Counter extends Vue {
 
     try {
       this.loading = true;
-      const response = await this.$store.dispatch("createNewItem", { newItem: this.newItem });
+      const response = await this.$store.dispatch("createNewItem", {
+        newItem: this.newItem
+      });
 
       this.isNewItemModalActive = false;
       this.loading = false;
@@ -206,17 +236,30 @@ export default class Counter extends Vue {
         type: "is-danger"
       });
     }
-  };
+  }
 
   get itemCategories() {
     return this.$store.state.itemCategories;
-  };
+  }
 
-  get filiteredCategories() {
-    return this.itemCategories.filter(({ category }) => (
-      category.toString().toLowerCase().indexOf(this.categorySearch.toLowerCase()) >= 0
-    ));
-  };
+  get filteredCategories() {
+    return this.itemCategories.filter(({ category }) =>
+      category
+        .toString()
+        .toLowerCase()
+        .indexOf(this.categorySearch.toLowerCase() >= 0)
+    );
+  }
+
+  get filteredItems() {
+    return this.itemCategories.map((category) => ({
+      ...category,
+      items: category.items.filter(({ name }) => (
+          name.toLowerCase().includes(this.itemSearch.toLowerCase()) ||
+          category.category.toLowerCase().includes(this.itemSearch.toLowerCase())
+      ))
+    }));
+  }
 
   async beforeCreate() {
     if (!this.$store.state.user.userID) await this.$router.push("/");
@@ -230,8 +273,6 @@ export default class Counter extends Vue {
         type: "is-danger"
       });
     }
-  };
+  }
 }
 </script>
-
-<style scoped></style>

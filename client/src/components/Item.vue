@@ -8,8 +8,14 @@
     <p class="card-header-title">{{ item.name }} ({{ category.category }})</p>
     <div class="card-content">
       <b-field v-if="showAdminControls">
-        <b-numberinput lazy v-model.lazy="stock" min="0"></b-numberinput
-      ></b-field>
+        <b-numberinput
+          lazy
+          min="0"
+          v-model.lazy="stock"
+          :icon="stock === 0 ? 'exclamation-circle' : stock <= 20 ? 'exclamation-triangle' : ''"
+          icon-pack="fas"
+        />
+      </b-field>
       <div class="content" v-else>{{ stock }} remaining</div>
     </div>
     <footer class="card-footer" v-if="showAdminControls">
@@ -52,7 +58,7 @@
                 clearable
                 v-model="categorySearch"
                 @select="option => (editFormProps.category = option._id)"
-                :data="filiteredCategories"
+                :data="filteredCategories"
                 ref="autocomplete"
               >
                 <template slot="header">
@@ -143,8 +149,7 @@
             />
           </header>
           <section class="modal-card-body">
-            Are you sure you want to delete this item
-            <strong>({{ item.name }})</strong>? You cannot restore this item
+            Are you sure you want to delete <strong>{{ item.name }}</strong>? You cannot restore this item
             back once it is deleted.
           </section>
           <footer class="modal-card-foot">
@@ -179,7 +184,7 @@ import { Vue, Component, Watch } from "vue-property-decorator";
     showAdminControls: Boolean
   }
 })
-export default class Counter extends Vue {
+export default class Item extends Vue {
   stock = this.$props.item.stock;
   isEditModalActive = false;
   editFormProps = { ...this.$props.item };
@@ -247,7 +252,7 @@ export default class Counter extends Vue {
           item: this.editFormProps._id,
           name: this.editFormProps.name
         }))
-      );
+      )
 
       if (this.item.stock !== this.editFormProps.stock) {
         this.stock = parseInt(this.editFormProps.stock);
@@ -260,22 +265,24 @@ export default class Counter extends Vue {
           item: this.editFormProps._id,
           image: this.editFormProps.image
         }))
-      );
+      )
 
-      if(this.item.category !== this.editFormProps.category) (
+      if (this.item.category !== this.editFormProps.category) (
         responses.push(await this.$store.dispatch("updateItemCategory", {
           category: this.category._id,
           item: this.editFormProps._id,
           newCategory: this.editFormProps.category
         }))
-      );
+      )
 
       this.isEditModalActive = false;
       this.loading = false;
-      if (responses.length) this.$buefy.toast.open({
-        message: responses.map(({ data }) => data.message).join(", "),
-        type: "is-success"
-      });
+
+      if (responses.length)
+        this.$buefy.toast.open({
+          message: responses.map(({ data }) => data.message).join(", "),
+          type: "is-success"
+        });
     } catch (err) {
       this.loading = false;
       this.$buefy.toast.open({
@@ -297,11 +304,11 @@ export default class Counter extends Vue {
     this.isDeleteModalActive = false;
   }
 
-  get filiteredCategories() {
+  get filteredCategories() {
     return this.$store.state.itemCategories.filter(({ category }) => (
       category.toString().toLowerCase().indexOf(this.categorySearch.toLowerCase()) >= 0
     ));
-  };
+  }
 
   @Watch("stock")
   updateStock(newStock) {
@@ -319,3 +326,13 @@ export default class Counter extends Vue {
   }
 }
 </script>
+
+<style>
+.fa-exclamation-triangle {
+  color: #ffb957;
+}
+
+.fa-exclamation-circle {
+  color: #f14668;
+}
+</style>

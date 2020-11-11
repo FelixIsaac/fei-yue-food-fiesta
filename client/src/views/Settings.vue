@@ -23,9 +23,10 @@
         <b-field label="Email" label-position="on-border" expanded>
           <b-input
             lazy
-            pattern="^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
             required
+            pattern="^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
             type="email"
+            icon="email"
             v-model="user.email"
             validation-message="Invalid email address"
           ></b-input>
@@ -33,9 +34,10 @@
         <b-field label="Phone number" label-position="on-border" expanded>
           <b-input
             lazy
-            pattern="^(\+65)?[689]\d{7}$"
             required
             type="tel"
+            icon="phone"
+            pattern="^(\+65)?[689]\d{7}$"
             v-model="user.phone"
             validation-message="Invalid phone number"
           ></b-input>

@@ -15,6 +15,12 @@ export const createCategory = async (name: ICategory["category"], authorization:
     return "Created category";
 };
 
+export const getItems = async (authorization: string) => {
+    const user = await getUser(authorization);
+    if (!user) throw "Unauthorized to perform this action";
+    return ItemModel.find({}).populate("category");
+};
+
 export const getCategories = async (authorization: string) => {
     const user = await getUser(authorization);
     if (!user) throw "Unauthorized to perform this action";

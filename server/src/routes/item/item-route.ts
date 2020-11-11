@@ -28,6 +28,16 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
 
     server.get("/", {}, async (request, reply) => {
         try {
+            const response = await itemController.getItems(reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess("OK", 200, response));
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+
+    server.get("/categories", {}, async (request, reply) => {
+        try {
             const response = await itemController.getCategories(reply.unsignCookie(request.cookies.token) as string);
             reply.send(handleSuccess("OK", 200, response));
         } catch (err) {
