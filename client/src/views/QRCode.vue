@@ -37,7 +37,7 @@ export default class QRCode extends Vue {
 
   async beforeCreate() {
     try {
-      const response = await this.$store.dispatch("getQRCode");
+      const response = await this.$store.dispatch("getQRCode", {});
 
       this.userID = response.userID;
       this.QRCode = response.QRCode;
