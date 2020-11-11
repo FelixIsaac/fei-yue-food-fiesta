@@ -157,6 +157,7 @@ export default class Settings extends Vue {
       else
         this.$buefy.toast.open({ message: "Updated user", type: "is-success" });
     } catch (err) {
+      console.error(err);
       this.$buefy.toast.open({
         message: err.response.data.message || err.toString(),
         type: "is-danger"
@@ -166,7 +167,7 @@ export default class Settings extends Vue {
     }
   }
 
-  changePassword() {
+  async changePassword() {
     if (this.password !== this.confirmPassword) {
       this.$buefy.toast.open({
         message: "Passwords must match",
@@ -178,6 +179,27 @@ export default class Settings extends Vue {
 
     this.loading = true;
     this.isPasswordModalActive = false;
+
+    try {
+      const response = await this.$store.dispatch("changeUserPassword", {
+        oldPassword: this.oldPassword,
+        password: this.password,
+        confirmPassword: this.confirmPassword
+      });
+
+      this.$buefy.toast.open({
+        message: response.data.message,
+        type: response.data.error ? "is-danger" : "is-success"
+      });
+    } catch (err) {
+      console.error(err);
+      this.$buefy.toast.open({
+        message: err.response?.data?.message || err.toString(),
+        type: "is-danger"
+      });
+    } finally {
+      this.loading = false;
+    }
   }
 
   async beforeCreate() {
