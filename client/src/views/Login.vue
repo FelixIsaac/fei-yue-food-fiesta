@@ -6,7 +6,7 @@
           lazy
           pattern="^(\+65)?[689]\d{7}$|^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
           required
-          type="input"
+          type="text"
           v-model="email"
           validation-message="Invalid email address or phone number"
         ></b-input>

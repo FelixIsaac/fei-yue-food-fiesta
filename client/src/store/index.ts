@@ -52,6 +52,14 @@ export default new Vuex.Store({
             await axios.get(`${process.env.VUE_APP_BASE_API}/user/logout`, { withCredentials: true });
             commit("SET_USER");
         },
+        async updateUser({ commit }) {
+            const response = await axios.get(
+              `${process.env.VUE_APP_BASE_API}/user/updatedUserFromLogin`,
+              { withCredentials: true }
+            );
+
+            commit("SET_USER", response.data.data);
+        },
         async createNewCategory({ commit, dispatch }, { newCategory }) {
             const response = await axios.post(
               `${process.env.VUE_APP_BASE_API}/item`,

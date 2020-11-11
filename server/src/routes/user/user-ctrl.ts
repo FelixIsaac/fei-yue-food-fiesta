@@ -1,5 +1,6 @@
-import UserModel, { IUser, IUserJWTToken } from "../../database/models/UserModel";
 import jwt from "jsonwebtoken";
+import UserModel, { IUser, IUserJWTToken } from "../../database/models/UserModel";
+import { decrypt } from "../../utils/encryption";
 
 export const createUser = async (userObject: Partial<IUser>) => {
     const user = new UserModel({
@@ -16,10 +17,18 @@ export const createUser = async (userObject: Partial<IUser>) => {
     return "Registered user";
 };
 
-export const getUser = async (jwtToken: string) => {
+export const getUser = async (jwtToken: string, opts: { decryptEmail: boolean, decryptPhone: boolean } = { decryptEmail: false, decryptPhone: false }) => {
     const JWTPayload = <IUserJWTToken>jwt.verify(jwtToken, process.env.JWT_ENCRYPTION_SECRET as string);
-    return UserModel.findById(JWTPayload.userID)
-      .populate("items");
+    const user =  await UserModel.findById(JWTPayload.userID)
+      .select("-password -history")
+      .populate("items")
+      .exec();
+
+    if (!user) throw "User not found";
+    if (opts.decryptEmail) user.email = decrypt(user.email);
+    if (opts.decryptPhone) user.phone = decrypt(user.phone);
+
+    return user;
 };
 
 export const isAdmin = async (jwtToken: string) => {

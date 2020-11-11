@@ -109,6 +109,21 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
+    server.get("/updatedUserFromLogin", async (request, reply) => {
+        try {
+            const updatedUser = await userController.getUser(reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess("Got updated user from login token", undefined, {
+                "fullName": `${updatedUser.firstName} ${updatedUser.lastName}`,
+                "admin": updatedUser.admin,
+                "userID": updatedUser._id,
+                "avatar": updatedUser.avatar
+            }));
+        } catch (err) {
+            const response = handleError(err, 401);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+
     server.delete<{
         Params: { userID: IUser["_id"]; };
     }>("/:userID", deleteSchema, async (request, reply) => {

@@ -138,7 +138,7 @@ export const getUserItemsHistorySchema = {
 export const resetUserItemsSchema = {
     "schema": {
         "params": {
-            "types": "object",
+            "type": "object",
             "properties": {
                 "userID": { "type": "string" }
             }

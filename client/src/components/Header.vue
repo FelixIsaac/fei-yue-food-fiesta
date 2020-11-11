@@ -46,5 +46,9 @@ export default class Counter extends Vue {
   get user() {
     return this.$store.state.user;
   }
+
+  beforeCreate() {
+    this.$store.dispatch("updateUser");
+  }
 }
 </script>

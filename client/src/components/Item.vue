@@ -45,7 +45,7 @@
                 maxlength="80"
               ></b-input>
             </b-field>
-            <b-field label="Category" label-position="on-border">
+            <b-field label="Category" label-position="on-border" style="margin-bottom: 20px;">
               <b-autocomplete
                 field="category"
                 open-on-focus
@@ -53,7 +53,6 @@
                 v-model="categorySearch"
                 @select="option => (editFormProps.category = option._id)"
                 :data="filiteredCategories"
-                dropdown-position="top"
                 ref="autocomplete"
               >
                 <template slot="header">
@@ -65,7 +64,6 @@
               <b-field label="Image" label-position="on-border" expanded>
                 <b-input
                   lazy
-                  password-reveal
                   pattern="https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
                   required
                   type="input"
@@ -271,7 +269,7 @@ export default class Counter extends Vue {
           newCategory: this.editFormProps.category
         }))
       );
-      
+
       this.isEditModalActive = false;
       this.loading = false;
       if (responses.length) this.$buefy.toast.open({
