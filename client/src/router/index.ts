@@ -24,6 +24,18 @@ const routes: Array<RouteConfig> = [{
     "name": "QRCode",
     "component": () => import("../views/QRCode.vue")
 }, {
+    "path": "/order",
+    "name": "SelectItems",
+    "component": () => import("../views/SelectItems.vue")
+}, {
+    "path": "/orders",
+    "name": "Orders",
+    "component": () => import("../views/Orders.vue")
+}, {
+    "path": "/qrcode-scanner",
+    "name": "QRCodeReader",
+    "component": () => import("../views/QRCodeReader.vue")
+}, {
 }];
 
 const router = new VueRouter({

@@ -5,7 +5,7 @@ require("dotenv").config({ "path": path.resolve(__dirname, "../", ".env") });
 require("./database");
 
 const app = fastify({ "logger": true });
-app.register(import("fastify-compress"));
+// app.register(import("fastify-compress"));
 app.register(import("fastify-cors"), { origin: [process.env.FRONT_DOMAIN as string], credentials: true  });
 app.register(import("fastify-cookie"), { "secret": process.env.COOKIE_SESSION_SECRET });
 // @ts-ignore

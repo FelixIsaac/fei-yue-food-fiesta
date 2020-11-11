@@ -6,6 +6,20 @@ import axios from "axios";
 
 Vue.use(Vuex);
 
+interface Item {
+    name: string;
+    image: string;
+    stock: number;
+    category: string;
+    _id: string;
+}
+
+interface Category {
+    category: string;
+    items: Item[]
+    _id: string;
+}
+
 const initUser = {
     avatar: "",
     admin: false,
@@ -16,7 +30,7 @@ const initUser = {
 export default new Vuex.Store({
     state: {
         user: initUser,
-        itemCategories: []
+        itemCategories: [] as Category[]
     },
     plugins: [createPersistedState({
         paths: ["user"],
@@ -94,7 +108,8 @@ export default new Vuex.Store({
             const categoryObject = updatedItemCategories.find(({ _id }) => _id === category);
 
             if (!categoryObject) return;
-            const itemObject = categoryObject.items.find(({ _id }: { _id: string }) => _id === item);
+            const itemObject = categoryObject.items.find(({ _id }) => _id === item);
+            if (!itemObject) return;
             itemObject.name = name;
 
             commit("SET_ITEM_CATEGORIES", updatedItemCategories);
@@ -109,7 +124,8 @@ export default new Vuex.Store({
             const categoryObject = updatedItemCategories.find(({ _id }) => _id === category);
 
             if (!categoryObject) return;
-            const itemObject = categoryObject.items.find(({ _id }: { _id: string }) => _id === item);
+            const itemObject = categoryObject.items.find(({ _id }) => _id === item);
+            if (!itemObject) return;
             itemObject.image = image;
 
             commit("SET_ITEM_CATEGORIES", updatedItemCategories);
@@ -127,6 +143,7 @@ export default new Vuex.Store({
 
             if (!categoryObject) return;
             const itemObject = categoryObject.items.find(({ _id }: { _id: string }) => _id === item);
+            if (!itemObject) return;
             itemObject.category = newCategory;
 
             commit("SET_ITEM_CATEGORIES", updatedItemCategories);
@@ -144,6 +161,7 @@ export default new Vuex.Store({
 
             if (!categoryObject) return;
             const itemObject = categoryObject.items.find(({ _id }: { _id: string }) => _id === item);
+            if (!itemObject) return;
             itemObject.stock = stock;
 
             commit("SET_ITEM_CATEGORIES", updatedItemCategories);
@@ -209,6 +227,9 @@ export default new Vuex.Store({
             );
 
             return response.data.data;
+        },
+        async readQRCode({ commit }, { code }) {
+            return;
         }
     },
     modules: {}

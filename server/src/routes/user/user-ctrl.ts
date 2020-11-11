@@ -167,14 +167,14 @@ export const viewHistory = async (userID: IUserDocument["_id"], authorization: s
     return user.history.slice(20 * page, 20 * (page + 1));
 };
 
-export const getOrder = async(userID: IUserDocument["_id"], authorization: string) => {
+export const getOrder = async (userID: IUserDocument["_id"], authorization: string) => {
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     const user = await UserModel.findById(userID);
 
     if (!user) throw "User not found";
     if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
 
-    const payload = {"id": user._id, "items": user.items || [] }
+    const payload = { "id": user._id, "items": user.items || [] }
 
     return {
         "userID": user._id,
@@ -183,4 +183,15 @@ export const getOrder = async(userID: IUserDocument["_id"], authorization: strin
           { "errorCorrectionLevel": "H" }
         )
     };
+}
+
+export const getTokenOrder = async (orderToken: string, authorization: string) => {
+    const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
+    const OrderToken = <{ id: IUserDocument["_id"], items: IUserDocument["items"] }>
+      jwt.verify(orderToken, process.env.JWT_ENCRYPTION_SECRET as string);
+    const user = await UserModel.findById(OrderToken.id);
+
+    if (!user) throw "User not found";
+    if (!JWTPayload.admin) throw "Unauthorized to perform this action";
+    return OrderToken.items;
 }

@@ -215,6 +215,18 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
+    server.get<{
+        Headers: { "x-order-token": string }
+    }>("/order/token", async (request, reply) => {
+        try {
+            const data = await userController.getTokenOrder(request.headers["x-order-token"], reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess("Got order by token", undefined, data));
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    });
+
     server.post("/orders", {}, async (request, reply) => {
        try {
 
