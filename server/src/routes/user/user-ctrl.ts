@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import QRCode from "qrcode";
 import UserModel, { IUserDocument, IUserJWTToken } from "../../database/models/UserModel";
 import { decrypt } from "../../utils/encryption";
 
@@ -165,3 +166,21 @@ export const viewHistory = async (userID: IUserDocument["_id"], authorization: s
 
     return user.history.slice(20 * page, 20 * (page + 1));
 };
+
+export const getOrder = async(userID: IUserDocument["_id"], authorization: string) => {
+    const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
+    const user = await UserModel.findById(userID);
+
+    if (!user) throw "User not found";
+    if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
+
+    const payload = {"id": user._id, "items": user.items || [] }
+
+    return {
+        "userID": user._id,
+        "QRCode": await QRCode.toDataURL(
+          jwt.sign(payload, process.env.JWT_ENCRYPTION_SECRET as string, { "expiresIn": 60 * 60 * 24 }),
+          { "errorCorrectionLevel": "H" }
+        )
+    };
+}

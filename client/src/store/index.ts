@@ -201,6 +201,14 @@ export default new Vuex.Store({
               { password, oldPassword },
               { withCredentials: true }
             );
+        },
+        async getQRCode({ state }) {
+            const response = await axios.get(
+              `${process.env.VUE_APP_BASE_API}/user/order/${state.user.userID}`,
+              { withCredentials: true }
+            );
+
+            return response.data.data;
         }
     },
     modules: {}

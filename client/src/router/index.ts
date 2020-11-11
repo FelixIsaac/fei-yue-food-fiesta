@@ -19,6 +19,11 @@ const routes: Array<RouteConfig> = [{
     "path": "/stocks",
     "name": "Stocks",
     "component": () => import("../views/Stocks.vue")
+}, {
+    "path": "/code",
+    "name": "QRCode",
+    "component": () => import("../views/QRCode.vue")
+}, {
 }];
 
 const router = new VueRouter({

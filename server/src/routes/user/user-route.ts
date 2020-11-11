@@ -203,8 +203,16 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
-    server.get("/qrcode", async (request, reply) => {
-
+    server.get<{
+        Params: { userID: IUserDocument["_id"]}
+    }>("/order/:userID", async (request, reply) => {
+        try {
+            const data = await userController.getOrder(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess("Here's your order! :)", undefined, data));
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
     });
 
     server.post("/orders", {}, async (request, reply) => {
