@@ -166,12 +166,10 @@ export default new Vuex.Store({
             return response;
         },
         async getUser() {
-            const response = await axios.get(
+            return (await axios.get(
               `${process.env.VUE_APP_BASE_API}/user/byToken`,
               { withCredentials: true }
-            );
-
-            return response.data.data;
+            )).data.data;
         },
         async editUser({ state, commit, dispatch }, { firstName, lastName, email, phone }) {
             const responses = await Promise.all([
@@ -196,7 +194,13 @@ export default new Vuex.Store({
             return responses.map(({ data }) => data);
         },
         async changeUserPassword({ state }, { oldPassword, password, confirmPassword }) {
-            if (password !== confirmPassword) return;
+            if (password !== confirmPassword) throw "Passwords does not match";
+
+            return await axios.patch(
+              `${process.env.VUE_APP_BASE_API}/user/${state.user.userID}/password`,
+              { password, oldPassword },
+              { withCredentials: true }
+            );
         }
     },
     modules: {}

@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
-import UserModel, { IUser, IUserJWTToken } from "../../database/models/UserModel";
+import UserModel, { IUserDocument, IUserJWTToken } from "../../database/models/UserModel";
 import { decrypt } from "../../utils/encryption";
 
-export const createUser = async (userObject: Partial<IUser>) => {
+export const createUser = async (userObject: Partial<IUserDocument>) => {
     const user = new UserModel({
         "firstName": userObject.firstName,
         "lastName": userObject.lastName,
@@ -37,8 +37,8 @@ export const isAdmin = async (jwtToken: string) => {
 };
 
 export const updateName = async (
-  userID: IUser["_id"],
-  [firstName, lastName]: [IUser["firstName"], IUser["lastName"]],
+  userID: IUserDocument["_id"],
+  [firstName, lastName]: [IUserDocument["firstName"], IUserDocument["lastName"]],
   authorization: string
 ) => {
     if (!firstName) throw "First name required in request body";
@@ -56,7 +56,7 @@ export const updateName = async (
     return "Updated name";
 };
 
-export const updateEmail = async (userID: IUser["_id"], newEmail: IUser["email"], authorization: string) => {
+export const updateEmail = async (userID: IUserDocument["_id"], newEmail: IUserDocument["email"], authorization: string) => {
     if (!newEmail) throw "New email required in request body";
 
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
@@ -71,13 +71,19 @@ export const updateEmail = async (userID: IUser["_id"], newEmail: IUser["email"]
     return "Updated email address";
 };
 
-export const updatePassword = async (userID: IUser["_id"], newPassword: IUser["password"], authorization: string) => {
-    if (!newPassword) throw "New password required in request body";
+export const updatePassword = async (
+  userID: IUserDocument["_id"],
+  newPassword: IUserDocument["password"],
+  oldPassword: IUserDocument["password"],
+  authorization: string
+) => {
+    if (!(newPassword || oldPassword)) throw "New password and old password required in request body";
 
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     const user = await UserModel.findById(userID);
     if (!user) throw "User not found";
     if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
+    if (!await user.comparePassword(oldPassword)) throw "Invalid old password";
 
     user.password = newPassword;
     await user.validate();
@@ -86,7 +92,7 @@ export const updatePassword = async (userID: IUser["_id"], newPassword: IUser["p
     return "Updated user password";
 };
 
-export const updatePhone = async (userID: IUser["_id"], newPhone: IUser["phone"], authorization: string) => {
+export const updatePhone = async (userID: IUserDocument["_id"], newPhone: IUserDocument["phone"], authorization: string) => {
     if (!newPhone) throw "New phone required in request body";
 
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
@@ -101,7 +107,7 @@ export const updatePhone = async (userID: IUser["_id"], newPhone: IUser["phone"]
     return "Updated user phone number";
 };
 
-export const deleteUser = async (userID: IUser["_id"], authorization: string) => {
+export const deleteUser = async (userID: IUserDocument["_id"], authorization: string) => {
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     if (!JWTPayload.admin) throw "Unauthorized to perform this action";
 
@@ -109,7 +115,7 @@ export const deleteUser = async (userID: IUser["_id"], authorization: string) =>
     return "Deleted user";
 };
 
-export const login = async (emailOrPhone: IUser["email"] | IUser["phone"], password: IUser["password"]) => {
+export const login = async (emailOrPhone: IUserDocument["email"] | IUserDocument["phone"], password: IUserDocument["password"]) => {
     const user = await UserModel.findOne().byEmailOrPhone(emailOrPhone);
     if (!user) throw "Invalid email or phone, and password";
     if (!await user.comparePassword(password)) throw "Invalid email or phone, and password";
@@ -128,7 +134,7 @@ export const login = async (emailOrPhone: IUser["email"] | IUser["phone"], passw
     };
 };
 
-export const updateItems = async (userID: IUser["_id"], items: IUser["items"], authorization: string) => {
+export const updateItems = async (userID: IUserDocument["_id"], items: IUserDocument["items"], authorization: string) => {
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     const user = await UserModel.findById(userID);
     if (!user) throw "User not found";
@@ -138,7 +144,7 @@ export const updateItems = async (userID: IUser["_id"], items: IUser["items"], a
     return "Updated items";
 };
 
-export const resetItems = async (userID: IUser["_id"], authorization: string) => {
+export const resetItems = async (userID: IUserDocument["_id"], authorization: string) => {
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     if (!JWTPayload.admin) throw "Unauthorized to perform this action";
     const user = await UserModel.findById(userID);
@@ -151,7 +157,7 @@ export const resetItems = async (userID: IUser["_id"], authorization: string) =>
     return "Reset user items";
 };
 
-export const viewHistory = async (userID: IUser["_id"], authorization: string, page = 0) => {
+export const viewHistory = async (userID: IUserDocument["_id"], authorization: string, page = 0) => {
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     const user = await UserModel.findById(userID);
     if (!user) throw "User not found";

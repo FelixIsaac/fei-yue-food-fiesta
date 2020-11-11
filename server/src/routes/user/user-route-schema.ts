@@ -67,7 +67,8 @@ export const amendUser = {
                 "lastName": { "type": "string" },
                 "email": { "type": "string", "format": "email" },
                 "phone": { "type": "string" },
-                "password": { "type": "string" }
+                "password": { "type": "string" },
+                "oldPassword": { "type": "string" }
             }
         },
         "params": {

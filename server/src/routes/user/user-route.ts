@@ -2,7 +2,7 @@ import { FastifyError, FastifyInstance, FastifyPluginOptions } from "fastify";
 import * as userController from "./user-ctrl";
 import cookie from "cookie";
 import { unsign } from "cookie-signature";
-import { IUser } from "../../database/models/UserModel";
+import { IUserDocument } from "../../database/models/UserModel";
 import {
     amendUser,
     deleteSchema,
@@ -16,7 +16,7 @@ import handleError, { handleSuccess } from "../../utils/handleError";
 export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (error?: FastifyError) => void) => {
     server.post("/", registerUser, async (request, reply) => {
         try {
-            await userController.createUser(request.body as Partial<IUser>);
+            await userController.createUser(request.body as Partial<IUserDocument>);
             reply.send(handleSuccess("Registered user"));
         } catch (err) {
             const response = handleError(err);
@@ -25,13 +25,14 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     });
 
     server.patch<{
-        Params: { userID: IUser["_id"]; action: string; };
+        Params: { userID: IUserDocument["_id"]; action: string; };
         Body: {
-            firstName: IUser["firstName"];
-            lastName: IUser["lastName"];
-            email: IUser["email"];
-            password: IUser["password"];
-            phone: IUser["phone"];
+            firstName: IUserDocument["firstName"];
+            lastName: IUserDocument["lastName"];
+            email: IUserDocument["email"];
+            password: IUserDocument["password"];
+            oldPassword: IUserDocument["password"];
+            phone: IUserDocument["phone"];
         };
     }>("/:userID/:action", amendUser, async (request, reply) => {
         try {
@@ -60,6 +61,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
                     const response = await userController.updatePassword(
                       request.params.userID,
                       request.body.password,
+                      request.body.oldPassword,
                       reply.unsignCookie(request.cookies.token) as string
                     );
 
@@ -87,7 +89,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     });
 
     server.post<{
-        Body: { email: IUser["email"]; password: IUser["password"]; };
+        Body: { email: IUserDocument["email"]; password: IUserDocument["password"]; };
     }>("/login", loginSchema, async (request, reply) => {
         try {
             const { token, payload } = await userController.login(request.body.email, request.body.password)
@@ -135,7 +137,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     });
 
     server.delete<{
-        Params: { userID: IUser["_id"]; };
+        Params: { userID: IUserDocument["_id"]; };
     }>("/:userID", deleteSchema, async (request, reply) => {
         try {
             const response = await userController.deleteUser(
@@ -151,7 +153,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     });
 
     server.put<{
-        Params: { userID: IUser["_id"]; }; Body: { items: IUser["items"]; };
+        Params: { userID: IUserDocument["_id"]; }; Body: { items: IUserDocument["items"]; };
     }>("/:userID/items", updateItemsSchema, async (request, reply) => {
         try {
             const response = await userController.updateItems(
@@ -168,7 +170,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     });
 
     server.get<{
-        Params: { userID: IUser["_id"]; };
+        Params: { userID: IUserDocument["_id"]; };
     }>("/:userID/history", getUserItemsHistorySchema, async (request, reply) => {
         try {
             const response = await userController.viewHistory(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
@@ -180,7 +182,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     });
 
     server.delete<{
-        Params: { userID: IUser["_id"]; };
+        Params: { userID: IUserDocument["_id"]; };
     }>("/:userID/items", resetUserItemsSchema, async (request, reply) => {
        try {
            const response = await userController.resetItems(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
@@ -201,21 +203,40 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
-    server.get("/qrcode", async (reply, request) => {
-        
-    })
+    server.get("/qrcode", async (request, reply) => {
+
+    });
+
+    server.post("/orders", {}, async (request, reply) => {
+       try {
+
+       } catch (err) {
+           const response = handleError(err);
+           reply.status(response.statusCode).send(response);
+       }
+    });
 
     server.get('/', { websocket: true }, async (connection: any, request: any) => {
-        type data = String | Buffer | ArrayBuffer | Buffer[];
-        const { token: signedToken = "" } = cookie.parse(request.headers.cookie || "");
-        const token = unsign(signedToken, process.env.COOKIE_SESSION_SECRET as string);
+        try {
+            type data = String | Buffer | ArrayBuffer | Buffer[];
+            const { token: signedToken = "" } = cookie.parse(request.headers.cookie || "");
+            const token = unsign(signedToken, process.env.COOKIE_SESSION_SECRET as string);
 
-        if (!token)  return connection.socket.close(1015, "Unauthorized");;
-        if (!(await userController.isAdmin(token))) return connection.socket.close(1015, "Unauthorized");
+            if (!token)  return connection.socket.close(1015, "Unauthorized");
+            if (!(await userController.isAdmin(token))) return connection.socket.close(1015, "Unauthorized");
 
-        connection.socket.on("error", (error: Error) => (
-          connection.socket.close(1015, "Unauthorized") && server.log.error(error)
-        ));
+            connection.socket.on("message", (data: data) => {
+                console.log(server.websocketServer);
+                console.log(data);
+            });
+
+            connection.socket.on("error", (error: Error) => (
+              connection.socket.close(1015, "Unauthorized") && server.log.error(error)
+            ));
+        } catch (err) {
+            handleError(err);
+            connection.socket.close(1015, "Unauthorized");
+        }
     });
 
     next();
