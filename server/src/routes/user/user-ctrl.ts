@@ -2,6 +2,8 @@ import jwt from "jsonwebtoken";
 import QRCode from "qrcode";
 import UserModel, { IUserDocument, IUserJWTToken } from "../../database/models/UserModel";
 import { decrypt } from "../../utils/encryption";
+import ItemModel from "../../database/models/ItemModel";
+import OrderModel from "../../database/models/OrderModel";
 
 export const createUser = async (userObject: Partial<IUserDocument>) => {
     const user = new UserModel({
@@ -18,9 +20,12 @@ export const createUser = async (userObject: Partial<IUserDocument>) => {
     return "Registered user";
 };
 
-export const getUser = async (jwtToken: string, opts: { decryptEmail: boolean, decryptPhone: boolean } = { decryptEmail: false, decryptPhone: false }) => {
+export const getUser = async (jwtToken: string, opts: { decryptEmail: boolean, decryptPhone: boolean } = {
+    decryptEmail: false,
+    decryptPhone: false
+}) => {
     const JWTPayload = <IUserJWTToken>jwt.verify(jwtToken, process.env.JWT_ENCRYPTION_SECRET as string);
-    const user =  await UserModel.findById(JWTPayload.userID)
+    const user = await UserModel.findById(JWTPayload.userID)
       .select("-password -history")
       .populate("items")
       .exec();
@@ -174,24 +179,39 @@ export const getOrder = async (userID: IUserDocument["_id"], authorization: stri
     if (!user) throw "User not found";
     if (!(user.id.toString() === JWTPayload.userID || JWTPayload.admin)) throw "Unauthorized to perform this action";
 
-    const payload = { "id": user._id, "items": user.items || [] }
+    const orderToken = jwt.sign(
+      { "id": user._id, "items": user.items || [] },
+      process.env.JWT_ENCRYPTION_SECRET as string,
+      { "expiresIn": 60 * 60 * 24 }
+    );
 
     return {
         "userID": user._id,
-        "QRCode": await QRCode.toDataURL(
-          jwt.sign(payload, process.env.JWT_ENCRYPTION_SECRET as string, { "expiresIn": 60 * 60 * 24 }),
-          { "errorCorrectionLevel": "H" }
-        )
+        "QRCode": await QRCode.toDataURL(orderToken, { "errorCorrectionLevel": "H" }),
+        orderToken
     };
-}
+};
 
 export const getTokenOrder = async (orderToken: string, authorization: string) => {
     const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
     const OrderToken = <{ id: IUserDocument["_id"], items: IUserDocument["items"] }>
       jwt.verify(orderToken, process.env.JWT_ENCRYPTION_SECRET as string);
-    const user = await UserModel.findById(OrderToken.id);
+    const user = await UserModel.findById(OrderToken.id).select("firstName lastName admin avatar");
 
     if (!user) throw "User not found";
     if (!JWTPayload.admin) throw "Unauthorized to perform this action";
-    return OrderToken.items;
-}
+
+    if (await OrderModel.exists({ "user": OrderToken.id }))
+        await OrderModel.findOneAndRemove({ "user": OrderToken.id });
+
+    await new OrderModel({ "user": OrderToken.id, "items": OrderToken.items }).save();
+
+    return {
+        "items": await ItemModel.find({ "_id": { "$in": OrderToken.items } }).lean(),
+        "user": {
+            "id": OrderToken.id,
+            "fullName": user.fullName,
+            "avatar": user.avatar
+        }
+    };
+};

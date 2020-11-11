@@ -9,13 +9,25 @@
       </b-navbar-item>
     </template>
     <template slot="start">
-      <b-navbar-item tag="router-link" to="/code">Show QRCode</b-navbar-item>
-      <b-navbar-item tag="router-link" to="/order">Select items</b-navbar-item>
+      <b-navbar-item tag="router-link" to="/code" activeClass="is-active">
+        Show QRCode
+      </b-navbar-item>
+      <b-navbar-item tag="router-link" to="/order" activeClass="is-active">
+        Select items
+      </b-navbar-item>
       <template v-if="user.admin && user.userID">
-        <b-navbar-item tag="router-link" to="/stocks">Stocks</b-navbar-item>
-        <b-navbar-item tag="router-link" to="/analytics">Analytics</b-navbar-item>
-        <b-navbar-item tag="router-link" to="/orders">Orders</b-navbar-item>
-        <b-navbar-item tag="router-link" to="/users">Manage users</b-navbar-item>
+        <b-navbar-item tag="router-link" to="/stocks" activeClass="is-active">
+          Stocks
+        </b-navbar-item>
+        <b-navbar-item tag="router-link" to="/analytics" activeClass="is-active">
+          Analytics
+        </b-navbar-item>
+        <b-navbar-item tag="router-link" to="/orders" activeClass="is-active">
+          Orders
+        </b-navbar-item>
+        <b-navbar-item tag="router-link" to="/users" activeClass="is-active">
+          Manage users
+        </b-navbar-item>
       </template>
     </template>
     <template slot="end">

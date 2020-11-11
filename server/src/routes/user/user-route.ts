@@ -8,7 +8,8 @@ import {
     deleteSchema,
     getUserItemsHistorySchema,
     loginSchema,
-    registerUser, resetUserItemsSchema,
+    registerUser,
+    resetUserItemsSchema,
     updateItemsSchema
 } from "./user-route-schema";
 import handleError, { handleSuccess } from "../../utils/handleError";
@@ -92,7 +93,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         Body: { email: IUserDocument["email"]; password: IUserDocument["password"]; };
     }>("/login", loginSchema, async (request, reply) => {
         try {
-            const { token, payload } = await userController.login(request.body.email, request.body.password)
+            const { token, payload } = await userController.login(request.body.email, request.body.password);
 
             reply.setCookie("token", token, {
                 "domain": process.env.DOMAIN,
@@ -111,9 +112,12 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
-    server.get("/byToken",async (request, reply) => {
+    server.get("/byToken", async (request, reply) => {
         try {
-            const updatedUser = await userController.getUser(reply.unsignCookie(request.cookies.token) as string, { decryptEmail: true, decryptPhone: true });
+            const updatedUser = await userController.getUser(reply.unsignCookie(request.cookies.token) as string, {
+                decryptEmail: true,
+                decryptPhone: true
+            });
             reply.send(handleSuccess("Got updated user", undefined, updatedUser));
         } catch (err) {
             const response = handleError(err, 401);
@@ -184,13 +188,13 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     server.delete<{
         Params: { userID: IUserDocument["_id"]; };
     }>("/:userID/items", resetUserItemsSchema, async (request, reply) => {
-       try {
-           const response = await userController.resetItems(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
-           reply.send(handleSuccess(response));
-       } catch (err) {
-           const response = handleError(err);
-           reply.status(response.statusCode).send(response);
-       }
+        try {
+            const response = await userController.resetItems(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess(response));
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
     });
 
     server.get("/logout", {}, async (request, reply) => {
@@ -204,7 +208,7 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
     });
 
     server.get<{
-        Params: { userID: IUserDocument["_id"]}
+        Params: { userID: IUserDocument["_id"] }
     }>("/order/:userID", async (request, reply) => {
         try {
             const data = await userController.getOrder(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
@@ -227,22 +231,13 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
-    server.post("/orders", {}, async (request, reply) => {
-       try {
-
-       } catch (err) {
-           const response = handleError(err);
-           reply.status(response.statusCode).send(response);
-       }
-    });
-
-    server.get('/', { websocket: true }, async (connection: any, request: any) => {
+    server.get("/orders", { websocket: true }, async (connection: any, request: any) => {
         try {
             type data = String | Buffer | ArrayBuffer | Buffer[];
             const { token: signedToken = "" } = cookie.parse(request.headers.cookie || "");
             const token = unsign(signedToken, process.env.COOKIE_SESSION_SECRET as string);
 
-            if (!token)  return connection.socket.close(1015, "Unauthorized");
+            if (!token) return connection.socket.close(1015, "Unauthorized");
             if (!(await userController.isAdmin(token))) return connection.socket.close(1015, "Unauthorized");
 
             connection.socket.on("message", (data: data) => {

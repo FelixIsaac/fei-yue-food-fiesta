@@ -220,7 +220,7 @@ export default new Vuex.Store({
               { withCredentials: true }
             );
         },
-        async getQRCode({ state }) {
+        async getQRCode({ state }, { userID }) {
             const response = await axios.get(
               `${process.env.VUE_APP_BASE_API}/user/order/${state.user.userID}`,
               { withCredentials: true }
@@ -228,8 +228,13 @@ export default new Vuex.Store({
 
             return response.data.data;
         },
-        async readQRCode({ commit }, { code }) {
-            return;
+        async readQRCode({ commit }, { token }) {
+            const response = await axios.get(
+              `${process.env.VUE_APP_BASE_API}/user/order/token`,
+              { withCredentials: true, headers: { "x-order-token": token } }
+            );
+
+            return response.data.data;
         }
     },
     modules: {}

@@ -4,11 +4,11 @@ export const createCategorySchema = {
             "type": "object",
             "required": ["name"],
             "properties": {
-                "name": { "type":  "string" }
+                "name": { "type": "string" }
             }
         }
     }
-}
+};
 
 export const getCategorySchema = {
     "schema": {
@@ -19,7 +19,7 @@ export const getCategorySchema = {
             }
         }
     }
-}
+};
 
 export const editCategoryNameSchema = {
     "schema": {
@@ -36,7 +36,7 @@ export const editCategoryNameSchema = {
             }
         }
     }
-}
+};
 
 export const deleteCategorySchema = {
     "schema": {
@@ -66,7 +66,7 @@ export const createItemSchema = {
             }
         }
     }
-}
+};
 
 export const editItemPropertiesSchema = {
     "schema": {
@@ -107,8 +107,6 @@ export const updateItemStockSchema = {
             }
         }
     }
-}
+};
 
-export const deleteItemSchema = {
-
-}
+export const deleteItemSchema = {};

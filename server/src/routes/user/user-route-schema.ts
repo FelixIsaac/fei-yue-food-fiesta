@@ -80,7 +80,7 @@ export const amendUser = {
             }
         }
     }
-}
+};
 
 export const loginSchema = {
     "schema": {
@@ -145,4 +145,4 @@ export const resetUserItemsSchema = {
             }
         }
     }
-}
+};

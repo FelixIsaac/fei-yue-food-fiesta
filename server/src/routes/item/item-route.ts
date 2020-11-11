@@ -2,11 +2,14 @@ import { FastifyError, FastifyInstance, FastifyPluginOptions } from "fastify";
 import * as itemController from "./item-ctrl";
 import handleError, { handleSuccess } from "../../utils/handleError";
 import {
-    createCategorySchema, createItemSchema,
+    createCategorySchema,
+    createItemSchema,
     deleteCategorySchema,
-    editCategoryNameSchema, editItemPropertiesSchema,
-    getCategorySchema, updateItemStockSchema,
-    deleteItemSchema
+    deleteItemSchema,
+    editCategoryNameSchema,
+    editItemPropertiesSchema,
+    getCategorySchema,
+    updateItemStockSchema
 } from "./item-route-schema";
 import { ICategory } from "../../database/models/CategoryModel";
 import { IItem } from "../../database/models/ItemModel";
@@ -187,6 +190,16 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
             reply.status(response.statusCode).send(response);
         }
     });
+
+    server.get("/orders", async (request, reply) => {
+        try {
+            const response = await itemController.getOrders(reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess("All orders", undefined, response));
+        } catch (err) {
+            const response = await handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
+    })
 
     next();
 });

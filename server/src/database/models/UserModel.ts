@@ -28,7 +28,8 @@ export interface IUserDocument extends IUser, Document {
     comparePassword(password: IUserDocument["password"]): boolean;
 }
 
-export interface IUserModel extends Model<IUserDocument, typeof queryHelpers> {}
+export interface IUserModel extends Model<IUserDocument, typeof queryHelpers> {
+}
 
 export interface IUserJWTToken {
     fullName: IUserDocument["fullName"];

@@ -1,13 +1,20 @@
 import { Document, model, Schema } from "mongoose";
 import uniqueValidator from "mongoose-unique-validator";
 import isURL from "validator/lib/isURL";
-import { ICategory, ICategoryModel } from "./CategoryModel";
+import { ICategory } from "./CategoryModel";
 
 export interface IItem extends Document {
     name: string;
     image: string;
     stock: number;
     category: Schema.Types.ObjectId | ICategory
+}
+
+export interface IItemDocument extends ICategory {
+    _id: Schema.Types.ObjectId;
+    id: Schema.Types.ObjectId;
+    createdAt: Date;
+    editedAt: Date;
 }
 
 export const itemSchema = new Schema({
@@ -42,4 +49,4 @@ export const itemSchema = new Schema({
 
 itemSchema.index({ "name": 1 });
 itemSchema.plugin(uniqueValidator, { "message": "There's already a item registered with that {PATH}" });
-export default model<ICategoryModel>("items", itemSchema);
+export default model<IItemDocument>("items", itemSchema);
