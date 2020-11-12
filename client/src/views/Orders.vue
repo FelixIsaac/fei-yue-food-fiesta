@@ -2,7 +2,7 @@
   <section class="container">
     <div style="margin: 50px 0;">
       <b-field label="Search order" label-position="on-border" grouped>
-        <b-input expanded icon="magnify"></b-input>
+        <b-input expanded icon="magnify" v-model="orderQuery" />
         <p class="control">
           <b-button class="is-success" @click="isQRCodeReaderActive = true">
             Open QR Code reader
@@ -17,19 +17,36 @@
       mobile-cards
       show-detail-icon
     >
-      <b-table-column field="orderID" label="Order ID" width="40" v-slot="props">
+      <b-table-column
+        field="orderID"
+        label="Order ID"
+        width="40"
+        v-slot="props"
+      >
         #{{ props.row.orderID }}
       </b-table-column>
       <b-table-column field="items" label="Items" v-slot="props">
         <span v-for="item in props.row.items" :key="item._id">
-          {{ item.name }} <strong>({{ item.category.category }})</strong>
+          {{ item.name }} <strong>({{ item.category.category }})</strong>,
         </span>
       </b-table-column>
       <b-table-column field="fullName" label="Full name" v-slot="props">
         {{ props.row.fullName }}
       </b-table-column>
+      <b-table-column label="Actions" v-slot="props">
+        <b-button class="is-success" @click="() => complete(props.row.orderID)">Complete</b-button>
+        <b-button class="is-danger" @click="() => remove(props.row.orderID)">Remove</b-button>
+      </b-table-column>
       <template slot="detail" slot-scope="props">
-        <Items :items="props.row.items" />
+        <div class="columns is-multiline">
+          <div
+            class="column is-one-quarter"
+            v-for="item in props.row.items"
+            :key="item._id"
+          >
+            <Item :item="item" :category="item.category" />
+          </div>
+        </div>
       </template>
     </b-table>
     <b-modal
@@ -136,8 +153,7 @@
           {{ order.user.fullName }}'s order
         </section>
         <footer class="modal-card-foot">
-          <b-button
-            @click="order = { ...order, modal: false }"
+          <b-button @click="order = { ...order, modal: false }"
             >Cancel</b-button
           >
           <b-button @click="retrieveOrder" class="is-primary">
@@ -152,22 +168,28 @@
 <script>
 import { Vue, Component } from "vue-property-decorator";
 import { QrcodeStream, QrcodeDropZone, QrcodeCapture } from "vue-qrcode-reader";
-import Items from "../components/Items";
+import Item from "../components/Item";
 
 @Component({
   components: {
     QrcodeStream,
     QrcodeDropZone,
     QrcodeCapture,
-    Items
+    Item
   }
 })
 export default class Orders extends Vue {
   isQRCodeReaderActive = false;
   isCodeModalActive = false;
+  orderQuery = "";
   code = "";
   camera = "auto";
-  order = { user: { fullName: "", id: "" }, items: [], token: "", modal: false };
+  order = {
+    user: { fullName: "", id: "" },
+    items: [],
+    token: "",
+    modal: false
+  };
   socket = null;
 
   async getTokenFromUserID(userID) {
@@ -187,7 +209,9 @@ export default class Orders extends Vue {
 
   async retrieveOrder() {
     this.order = { ...this.order, modal: false };
-    const order = await this.$store.dispatch("registerOrder", { token: this.order.token });
+    const order = await this.$store.dispatch("registerOrder", {
+      token: this.order.token
+    });
 
     this.socket.send(
       JSON.stringify({
@@ -255,7 +279,7 @@ export default class Orders extends Vue {
       console.info("Successfully connected to the echo websocket server...");
     };
 
-    this.socket.onerror = (err) => {
+    this.socket.onerror = err => {
       console.error("Socket died when it encountered an error: ", err.message);
       this.socket.close();
     };
@@ -267,16 +291,24 @@ export default class Orders extends Vue {
   }
 
   get orders() {
-    console.log(this.$store.state.itemOrders);
     return this.$store.state.itemOrders;
   }
 
   get formattedOrders() {
-    return this.orders.map(({ items, user, _id }) => ({
-      fullName: `${user.firstName} ${user.lastName}`,
-      orderID: user._id,
-      items
-    }));
+    return this.orders.filter(({ items, user }) => (
+          items.filter(({ name, category }) => (
+              name.toLowerCase().includes(this.orderQuery.toLowerCase()) ||
+              category.category.toLowerCase().includes(this.orderQuery.toLowerCase())
+          )).length || user._id.toLowerCase().includes(this.orderQuery.toLowerCase()) ||
+          user.firstName
+            .toLowerCase()
+            .includes(this.orderQuery.toLowerCase()) ||
+          user.lastName.toLowerCase().includes(this.orderQuery.toLowerCase())
+    )).map(({ items, user, _id }) => ({
+        fullName: `${user.firstName} ${user.lastName}`,
+        orderID: user._id,
+        items
+      }));
   }
 
   async beforeCreate() {
