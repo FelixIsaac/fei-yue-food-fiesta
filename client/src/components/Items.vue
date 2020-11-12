@@ -18,6 +18,8 @@
           :item="item"
           :category="category"
           :show-admin-controls="showAdminControls"
+          :selectable="selectable"
+          :selected="!!$store.state.selectedItems.filter(({ _id }) => _id === item._id).length"
         />
       </div>
     </div>
@@ -29,6 +31,14 @@ import Vue from "vue";
 import Component from "vue-class-component";
 import Item from "./Item.vue";
 
-@Component({ props: { items: Array, category: {}, showAdminControls: Boolean }, components: { Item } })
+@Component({
+  props: {
+    items: Array,
+    category: {},
+    showAdminControls: Boolean,
+    selectable: Boolean
+  },
+  components: { Item }
+})
 export default class Items extends Vue {}
 </script>

@@ -111,12 +111,15 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
-    server.get("/byToken", async (request, reply) => {
+    server.get<{
+        Headers: { "x-user-selector": string; "x-decrypt-email": boolean; "x-decrypt-phone": boolean; }
+    }>("/byToken", async (request, reply) => {
         try {
             const updatedUser = await userController.getUser(reply.unsignCookie(request.cookies.token) as string, {
                 decryptEmail: true,
                 decryptPhone: true
             });
+
             reply.send(handleSuccess("Got updated user", undefined, updatedUser));
         } catch (err) {
             const response = handleError(err, 401);
@@ -178,18 +181,6 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         try {
             const response = await userController.viewHistory(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
             reply.send(handleSuccess("OK", 200, response));
-        } catch (err) {
-            const response = handleError(err);
-            reply.status(response.statusCode).send(response);
-        }
-    });
-
-    server.delete<{
-        Params: { userID: IUserDocument["_id"]; };
-    }>("/:userID/items", resetUserItemsSchema, async (request, reply) => {
-        try {
-            const response = await userController.resetItems(request.params.userID, reply.unsignCookie(request.cookies.token) as string);
-            reply.send(handleSuccess(response));
         } catch (err) {
             const response = handleError(err);
             reply.status(response.statusCode).send(response);

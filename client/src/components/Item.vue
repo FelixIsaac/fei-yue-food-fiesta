@@ -18,6 +18,15 @@
       </b-field>
       <div class="content" v-else>{{ stock }} remaining</div>
     </div>
+    <footer
+      :class="`card-footer selected-card-footer ${selected ? 'selected' : $store.state.selectedItems.length >= 3 ? 'disable' : ''}`"
+      v-if="selectable"
+      @click="toggleSelectItem"
+    >
+      <p class="card-footer-item">
+        {{ selected ? "Selected" : "Select" }}
+      </p>
+    </footer>
     <footer class="card-footer" v-if="showAdminControls">
       <a class="card-footer-item" @click="isEditModalActive = true">Edit</a>
       <a class="card-footer-item" @click="isDeleteModalActive = true">Delete</a>
@@ -181,7 +190,9 @@ import { Vue, Component, Watch } from "vue-property-decorator";
       stock: Number
     },
     category: {},
-    showAdminControls: Boolean
+    showAdminControls: Boolean,
+    selectable: Boolean,
+    selected: Boolean
   }
 })
 export default class Item extends Vue {
@@ -304,6 +315,18 @@ export default class Item extends Vue {
     this.isDeleteModalActive = false;
   }
 
+  async toggleSelectItem() {
+    if (this.$store.state.selectedItems.length >= 3) this.$buefy.toast.open({
+      message: "You can only select more than 3 items",
+      type: "is-danger"
+    });
+
+    await this.$store.dispatch("toggleSelectItemOrder", {
+      itemID: this.item._id,
+      item: this.item
+    });
+  }
+
   get filteredCategories() {
     return this.$store.state.itemCategories.filter(({ category }) => (
       category.toString().toLowerCase().indexOf(this.categorySearch.toLowerCase()) >= 0
@@ -326,6 +349,21 @@ export default class Item extends Vue {
   }
 }
 </script>
+
+<style scoped>
+.selected-card-footer {
+  background-color: #B4D5FE;
+  cursor: pointer;
+}
+
+.selected-card-footer.selected {
+  background-color: #3298FD;
+}
+
+.selected-card-footer.disable {
+  cursor: no-drop;
+}
+</style>
 
 <style>
 .fa-exclamation-triangle {

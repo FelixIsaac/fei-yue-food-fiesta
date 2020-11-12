@@ -41,7 +41,8 @@ export default new Vuex.Store({
     state: {
         user: initUser,
         itemCategories: [] as Category[],
-        itemOrders: [] as Order[]
+        itemOrders: [] as Order[],
+        selectedItems: [] as Item[]
     },
     plugins: [createPersistedState({
         paths: ["user"],
@@ -64,6 +65,16 @@ export default new Vuex.Store({
         },
         SET_ITEM_ORDERS(state, itemOrders) {
             state.itemOrders = itemOrders;
+        },
+        async SET_SELECTED_ITEMS(state, selectedItems) {
+            const response = await axios.put(
+              `${process.env.VUE_APP_BASE_API}/user/${state.user.userID}/items`,
+              { items: selectedItems },
+              { withCredentials: true }
+            );
+
+            state.selectedItems = selectedItems;
+            return response;
         }
     },
     actions: {
@@ -197,10 +208,13 @@ export default new Vuex.Store({
             commit("SET_ITEM_CATEGORIES", updatedItemCategories);
             return response;
         },
-        async getUser() {
+        async getUser({ state }, { selector = "-email -phone", decryptEmail = false, decryptPhone = false }) {
             return (await axios.get(
               `${process.env.VUE_APP_BASE_API}/user/byToken`,
-              { withCredentials: true }
+              {
+                  headers: { "x-user-selector": selector, "x-decrypt-email": decryptEmail, "x-decrypt-phone": decryptPhone },
+                  withCredentials: true
+              }
             )).data.data;
         },
         async editUser({ state, commit, dispatch }, { firstName, lastName, email, phone }) {
@@ -277,6 +291,15 @@ export default new Vuex.Store({
             const updatedItemOrders = state.itemOrders;
             updatedItemOrders.splice(updatedItemOrders.findIndex(({ _id }) => _id === orderID), 1);
             commit("SET_ITEM_ORDERS", updatedItemOrders);
+        },
+        async toggleSelectItemOrder({ commit, state }, { itemID, item }) {
+            const updatedSelectedItems = state.selectedItems;
+
+            if (updatedSelectedItems.find(({ _id }) => _id === itemID))
+                updatedSelectedItems.splice(updatedSelectedItems.findIndex(({ _id }) => _id === itemID), 1);
+            else updatedSelectedItems.push(item);
+
+            commit("SET_SELECTED_ITEMS", updatedSelectedItems.slice(0, 3));
         }
     },
     modules: {}

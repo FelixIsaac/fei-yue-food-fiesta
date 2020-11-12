@@ -228,6 +228,7 @@ export default class Orders extends Vue {
     );
   }
 
+  async complete(orderID) {
     await this.$store.dispatch("completeOrder", { orderID });
 
     this.socket.send(
@@ -237,6 +238,7 @@ export default class Orders extends Vue {
       })
     );
   }
+
   async onDecode(result) {
     this.toggleCamera();
     await this.getItems(result);
@@ -278,7 +280,9 @@ export default class Orders extends Vue {
   }
 
   createSocket() {
-    this.socket = new WebSocket(`${process.env.VUE_APP_BASE_WEBSOCKET}/user/orders`);
+    this.socket = new WebSocket(
+      `${process.env.VUE_APP_BASE_WEBSOCKET}/user/orders`
+    );
 
     this.socket.onmessage = async ({ data }) => {
       try {
@@ -363,5 +367,3 @@ export default class Orders extends Vue {
   }
 }
 </script>
-
-<style scoped></style>

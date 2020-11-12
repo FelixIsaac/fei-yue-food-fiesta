@@ -96,14 +96,15 @@ export const userSchema = new Schema({
         },
         "required": [true, "Password is required for account creation"]
     },
-    "items": {
+    "items": [{
         "type": [Schema.Types.ObjectId],
+        "ref": "items",
         "validate": {
             "validator": (items: IUserDocument["items"]) => items.length <= 3,
             "message": "Cannot select more than three items"
         },
         "default": []
-    },
+    }],
     "history": {
         "type": [[String]],
         "default": []
