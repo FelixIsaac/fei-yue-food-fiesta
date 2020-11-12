@@ -11,6 +11,7 @@ import {
     updateItemsSchema
 } from "./user-route-schema";
 import handleError, { handleSuccess } from "../../utils/handleError";
+import { IOrderDocument } from "../../database/models/OrderModel";
 
 export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (error?: FastifyError) => void) => {
     server.post("/", registerUser, async (request, reply) => {
@@ -249,6 +250,18 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
                 if (client !== connection.socket && client.readyState === 1) client.send(message);
             })
         })
+    });
+
+    server.delete<{
+        Params: { orderID: IOrderDocument["_id"] }
+    }>("/order/:orderID", async (request, reply) => {
+        try {
+            const response = await userController.completeOrder(request.params.orderID, reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess(response, undefined));
+        } catch (err) {
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
+        }
     });
 
     next();

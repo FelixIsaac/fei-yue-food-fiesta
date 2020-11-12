@@ -22,11 +22,12 @@ interface Category {
 
 interface Order {
     user: {
-        Id: string;
+        _id: string;
         firstName: string;
         lastName: string;
     };
     items: (Item & Category)[];
+    _id: string;
 }
 
 const initUser = {
@@ -266,6 +267,16 @@ export default new Vuex.Store({
             );
 
             commit("SET_ITEM_ORDERS", response.data.data);
+        },
+        async completeOrder({ commit, state }, { orderID }) {
+            await axios.delete(
+              `${process.env.VUE_APP_BASE_API}/user/order/${orderID}`,
+              { withCredentials: true }
+            );
+
+            const updatedItemOrders = state.itemOrders;
+            updatedItemOrders.splice(updatedItemOrders.findIndex(({ _id }) => _id === orderID), 1);
+            commit("SET_ITEM_ORDERS", updatedItemOrders);
         }
     },
     modules: {}

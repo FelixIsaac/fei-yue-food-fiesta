@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import UserModel, { IUserDocument, IUserJWTToken } from "../../database/models/UserModel";
 import { decrypt } from "../../utils/encryption";
 import ItemModel from "../../database/models/ItemModel";
-import OrderModel from "../../database/models/OrderModel";
+import OrderModel, { IOrderDocument } from "../../database/models/OrderModel";
 
 export const createUser = async (userObject: Partial<IUserDocument>) => {
     const user = new UserModel({
@@ -227,7 +227,8 @@ export const registerOrder = async (orderToken: string, authorization: string) =
     if (await OrderModel.exists({ "user": OrderToken.id }))
         await OrderModel.findOneAndRemove({ "user": OrderToken.id });
 
-    await new OrderModel({ "user": OrderToken.id, "items": OrderToken.items }).save();
+    const { _id: orderID } = await new OrderModel({ "user": OrderToken.id, "items": OrderToken.items }).save();
+    await resetItems(OrderToken.id, authorization);
 
     return {
         "items": await ItemModel
@@ -239,6 +240,15 @@ export const registerOrder = async (orderToken: string, authorization: string) =
             "lastName": user.lastName,
             "fullName": user.fullName,
             "avatar": user.avatar
-        }
+        },
+        "_id": orderID
     };
-}
+};
+
+export const completeOrder = async (orderID: IOrderDocument["_id"], authorization: string) => {
+    const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
+    if (!JWTPayload.admin) throw "Unauthorized to perform this action";
+
+    await OrderModel.findByIdAndRemove(orderID);
+    return "Completed order, now removing from order list"
+};

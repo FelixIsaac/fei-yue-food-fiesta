@@ -34,8 +34,15 @@
         {{ props.row.fullName }}
       </b-table-column>
       <b-table-column label="Actions" v-slot="props">
-        <b-button class="is-success" @click="() => complete(props.row.orderID)">Complete</b-button>
-        <b-button class="is-danger" @click="() => remove(props.row.orderID)">Remove</b-button>
+        <div class="buttons">
+          <b-button
+            class="is-success"
+            @click="() => complete(props.row.orderID)"
+            size="is-small"
+            icon-right="check"
+            >Complete</b-button
+          >
+        </div>
       </b-table-column>
       <template slot="detail" slot-scope="props">
         <div class="columns is-multiline">
@@ -221,6 +228,15 @@ export default class Orders extends Vue {
     );
   }
 
+    await this.$store.dispatch("completeOrder", { orderID });
+
+    this.socket.send(
+      JSON.stringify({
+        action: "COMPLETE_ORDER",
+        orderID
+      })
+    );
+  }
   async onDecode(result) {
     this.toggleCamera();
     await this.getItems(result);
@@ -266,10 +282,30 @@ export default class Orders extends Vue {
 
     this.socket.onmessage = async ({ data }) => {
       try {
-        await this.$store.commit("SET_ITEM_ORDERS", [
-          ...this.$store.state.itemOrders,
-          JSON.parse(data).order
-        ]);
+        const { action, order, orderID } = JSON.parse(data);
+
+        switch (action) {
+          case "REGISTER_NEW_ORDER":
+            await this.$store.commit("SET_ITEM_ORDERS", [
+              ...this.$store.state.itemOrders,
+              order
+            ]);
+            break;
+          case "COMPLETE_ORDER": {
+            const updatedItemOrders = this.$store.state.itemOrders;
+            updatedItemOrders.splice(
+              updatedItemOrders.findIndex(({ _id }) => _id === orderID),
+              1
+            );
+
+            return await this.$store.commit(
+              "SET_ITEM_ORDERS",
+              updatedItemOrders
+            );
+          }
+          default:
+            break;
+        }
       } catch (err) {
         console.error(err, data);
       }
@@ -295,18 +331,25 @@ export default class Orders extends Vue {
   }
 
   get formattedOrders() {
-    return this.orders.filter(({ items, user }) => (
-          items.filter(({ name, category }) => (
+    return this.orders
+      .filter(
+        ({ items, user }) =>
+          items.filter(
+            ({ name, category }) =>
               name.toLowerCase().includes(this.orderQuery.toLowerCase()) ||
-              category.category.toLowerCase().includes(this.orderQuery.toLowerCase())
-          )).length || user._id.toLowerCase().includes(this.orderQuery.toLowerCase()) ||
+              category.category
+                .toLowerCase()
+                .includes(this.orderQuery.toLowerCase())
+          ).length ||
+          user._id.toLowerCase().includes(this.orderQuery.toLowerCase()) ||
           user.firstName
             .toLowerCase()
             .includes(this.orderQuery.toLowerCase()) ||
           user.lastName.toLowerCase().includes(this.orderQuery.toLowerCase())
-    )).map(({ items, user, _id }) => ({
+      )
+      .map(({ items, user, _id }) => ({
         fullName: `${user.firstName} ${user.lastName}`,
-        orderID: user._id,
+        orderID: _id,
         items
       }));
   }
