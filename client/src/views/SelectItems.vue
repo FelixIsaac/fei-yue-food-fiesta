@@ -31,9 +31,10 @@ export default class SelectItems extends Vue {
   get filteredItems() {
     return this.itemCategories.map((category) => ({
       ...category,
-      items: category.items.filter(({ name }) => (
+      items: category.items.filter(({ name, stock }) => ((
           name.toLowerCase().includes(this.itemSearch.toLowerCase()) ||
           category.category.toLowerCase().includes(this.itemSearch.toLowerCase())
+        ) && stock
       ))
     }));
   }

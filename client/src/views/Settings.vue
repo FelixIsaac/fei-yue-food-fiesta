@@ -205,7 +205,7 @@ export default class Settings extends Vue {
   }
 
   async beforeCreate() {
-    this.user = await this.$store.dispatch("getUser");
+    this.user = await this.$store.dispatch("getUser", { selector: "", decryptEmail: true, decryptPhone: true });
   }
 }
 </script>

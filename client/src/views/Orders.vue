@@ -149,18 +149,24 @@
     >
       <div class="modal-card" style="width: auto; min-width: 500px;">
         <header class="modal-card-head">
-          <p class="modal-card-title">Order #{{ order.user.id }}</p>
+          <p class="modal-card-title">Order #{{ order.user._id }}</p>
           <button
             type="button"
             class="delete"
-            @click="order = { ...order, modal: false }"
+            @click="() => {order = { ...order, modal: false }; turnCameraOn(); }"
           />
         </header>
         <section class="modal-card-body">
-          {{ order.user.fullName }}'s order
+          <h1 style="font-size: 19px;">{{ order.user.fullName }}'s order</h1>
+          <ol type="1" style="margin-left: 20px; margin-top: 5px;">
+            <li v-for="item in order.items" :key="item._id">
+              {{ item.name }}
+              <strong>({{ item.category.category }})</strong>
+            </li>
+          </ol>
         </section>
         <footer class="modal-card-foot">
-          <b-button @click="order = { ...order, modal: false }"
+          <b-button @click="() => {order = { ...order, modal: false }; turnCameraOn(); }"
             >Cancel</b-button
           >
           <b-button @click="retrieveOrder" class="is-primary">
@@ -216,6 +222,7 @@ export default class Orders extends Vue {
 
   async retrieveOrder() {
     this.order = { ...this.order, modal: false };
+    this.turnCameraOn()
     const order = await this.$store.dispatch("registerOrder", {
       token: this.order.token
     });
@@ -240,19 +247,16 @@ export default class Orders extends Vue {
   }
 
   async onDecode(result) {
-    this.toggleCamera();
+    this.turnCameraOff();
     await this.getItems(result);
   }
 
-  toggleCamera() {
-    switch (this.camera) {
-      case "auto":
-        this.camera = "off";
-        break;
-      case "off":
-        this.camera = "auto";
-        break;
-    }
+  turnCameraOff() {
+    this.camera = "off";
+  }
+
+  turnCameraOn() {
+    this.camera = "auto";
   }
 
   logErrors(promise) {
