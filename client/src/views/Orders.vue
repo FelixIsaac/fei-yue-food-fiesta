@@ -10,7 +10,28 @@
         </p>
       </b-field>
     </div>
-
+    <b-table
+      :data="formattedOrders"
+      striped
+      detailed
+      mobile-cards
+      show-detail-icon
+    >
+      <b-table-column field="orderID" label="Order ID" width="40" v-slot="props">
+        #{{ props.row.orderID }}
+      </b-table-column>
+      <b-table-column field="items" label="Items" v-slot="props">
+        <span v-for="item in props.row.items" :key="item._id">
+          {{ item.name }} <strong>({{ item.category.category }})</strong>
+        </span>
+      </b-table-column>
+      <b-table-column field="fullName" label="Full name" v-slot="props">
+        {{ props.row.fullName }}
+      </b-table-column>
+      <template slot="detail" slot-scope="props">
+        <Items :items="props.row.items" />
+      </template>
+    </b-table>
     <b-modal
       v-model="isQRCodeReaderActive"
       has-modal-card
@@ -31,12 +52,17 @@
         </header>
         <section class="modal-card-body">
           <qrcode-drop-zone @decode="onDecode" @init="logErrors">
-            <qrcode-stream @decode="onDecode" @init="onInit" :camera="camera"> </qrcode-stream>
+            <qrcode-stream @decode="onDecode" @init="onInit" :camera="camera">
+            </qrcode-stream>
           </qrcode-drop-zone>
         </section>
         <footer class="modal-card-foot">
           <b-button @click="isQRCodeReaderActive = false">Close</b-button>
-          <b-button @click="isCodeModalActive = true" class="is-primary is-light">Use code instead</b-button>
+          <b-button
+            @click="isCodeModalActive = true"
+            class="is-primary is-light"
+            >Use code instead</b-button
+          >
           <qrcode-drop-zone @decode="onDecode" @init="logErrors">
             <div class="field file is-primary">
               <label class="upload control file-label">
@@ -89,7 +115,7 @@
       </div>
     </b-modal>
     <b-modal
-      v-model="order.items.length"
+      v-model="order.modal"
       has-modal-card
       trap-focus
       :destroy-on-hide="false"
@@ -103,15 +129,17 @@
           <button
             type="button"
             class="delete"
-            @click="isCodeModalActive = false"
+            @click="order = { ...order, modal: false }"
           />
         </header>
         <section class="modal-card-body">
           {{ order.user.fullName }}'s order
-
         </section>
         <footer class="modal-card-foot">
-          <b-button @click="order = { user: { fullName: '', id: '' }, items: [] }">Cancel</b-button>
+          <b-button
+            @click="order = { ...order, modal: false }"
+            >Cancel</b-button
+          >
           <b-button @click="retrieveOrder" class="is-primary">
             Retrieve order
           </b-button>
@@ -123,13 +151,15 @@
 
 <script>
 import { Vue, Component } from "vue-property-decorator";
-import { QrcodeStream, QrcodeDropZone, QrcodeCapture } from 'vue-qrcode-reader'
+import { QrcodeStream, QrcodeDropZone, QrcodeCapture } from "vue-qrcode-reader";
+import Items from "../components/Items";
 
 @Component({
   components: {
     QrcodeStream,
     QrcodeDropZone,
-    QrcodeCapture
+    QrcodeCapture,
+    Items
   }
 })
 export default class Orders extends Vue {
@@ -137,19 +167,34 @@ export default class Orders extends Vue {
   isCodeModalActive = false;
   code = "";
   camera = "auto";
-  order = { user: { fullName: "", id: "" }, items: [] };
+  order = { user: { fullName: "", id: "" }, items: [], token: "", modal: false };
+  socket = null;
 
   async getTokenFromUserID(userID) {
-    await this.getItems((await this.$store.dispatch("getQRCode", { userID })).orderToken);
+    await this.getItems(
+      (await this.$store.dispatch("getQRCode", { userID })).orderToken
+    );
     this.isCodeModalActive = false;
   }
 
   async getItems(token) {
-    this.order = await this.$store.dispatch("readQRCode", { token });
+    this.order = {
+      ...(await this.$store.dispatch("readQRCode", { token })),
+      token,
+      modal: true
+    };
   }
 
   async retrieveOrder() {
-    return 0;
+    this.order = { ...this.order, modal: false };
+    const order = await this.$store.dispatch("registerOrder", { token: this.order.token });
+
+    this.socket.send(
+      JSON.stringify({
+        action: "REGISTER_NEW_ORDER",
+        order
+      })
+    );
   }
 
   async onDecode(result) {
@@ -158,7 +203,7 @@ export default class Orders extends Vue {
   }
 
   toggleCamera() {
-    switch(this.camera) {
+    switch (this.camera) {
       case "auto":
         this.camera = "off";
         break;
@@ -176,28 +221,72 @@ export default class Orders extends Vue {
     try {
       await promise;
     } catch (error) {
-      if (error.name === 'NotAllowedError') {
+      if (error.name === "NotAllowedError") {
         this.error = "ERROR: you need to grant camera access permisson";
-      } else if (error.name === 'NotFoundError') {
+      } else if (error.name === "NotFoundError") {
         this.error = "ERROR: no camera on this device";
-      } else if (error.name === 'NotSupportedError') {
+      } else if (error.name === "NotSupportedError") {
         this.error = "ERROR: secure context required (HTTPS, localhost)";
-      } else if (error.name === 'NotReadableError') {
+      } else if (error.name === "NotReadableError") {
         this.error = "ERROR: is the camera already in use?";
-      } else if (error.name === 'OverconstrainedError') {
+      } else if (error.name === "OverconstrainedError") {
         this.error = "ERROR: installed cameras are not suitable";
-      } else if (error.name === 'StreamApiNotSupportedError') {
+      } else if (error.name === "StreamApiNotSupportedError") {
         this.error = "ERROR: Stream API is not supported in this browser";
       }
     }
   }
 
-  beforeCreate() {
-    return;
+  createSocket() {
+    this.socket = new WebSocket(`${process.env.VUE_APP_BASE_WEBSOCKET}/user/orders`);
+
+    this.socket.onmessage = async ({ data }) => {
+      try {
+        await this.$store.commit("SET_ITEM_ORDERS", [
+          ...this.$store.state.itemOrders,
+          JSON.parse(data).order
+        ]);
+      } catch (err) {
+        console.error(err, data);
+      }
+    };
+
+    this.socket.onopen = () => {
+      console.info("Successfully connected to the echo websocket server...");
+    };
+
+    this.socket.onerror = (err) => {
+      console.error("Socket died when it encountered an error: ", err.message);
+      this.socket.close();
+    };
+
+    this.socket.onclose = () => {
+      console.info("Socket is closing, reconnecting soon :)");
+      setTimeout(() => this.createSocket(), 1000);
+    };
+  }
+
+  get orders() {
+    console.log(this.$store.state.itemOrders);
+    return this.$store.state.itemOrders;
+  }
+
+  get formattedOrders() {
+    return this.orders.map(({ items, user, _id }) => ({
+      fullName: `${user.firstName} ${user.lastName}`,
+      orderID: user._id,
+      items
+    }));
+  }
+
+  async beforeCreate() {
+    await this.$store.dispatch("getOrders");
+  }
+
+  created() {
+    this.createSocket();
   }
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

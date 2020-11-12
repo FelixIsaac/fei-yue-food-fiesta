@@ -20,6 +20,15 @@ interface Category {
     _id: string;
 }
 
+interface Order {
+    user: {
+        Id: string;
+        firstName: string;
+        lastName: string;
+    };
+    items: (Item & Category)[];
+}
+
 const initUser = {
     avatar: "",
     admin: false,
@@ -30,7 +39,8 @@ const initUser = {
 export default new Vuex.Store({
     state: {
         user: initUser,
-        itemCategories: [] as Category[]
+        itemCategories: [] as Category[],
+        itemOrders: [] as Order[]
     },
     plugins: [createPersistedState({
         paths: ["user"],
@@ -50,6 +60,9 @@ export default new Vuex.Store({
         },
         SET_ITEM_CATEGORIES(state, itemCategories) {
             state.itemCategories = itemCategories;
+        },
+        SET_ITEM_ORDERS(state, itemOrders) {
+            state.itemOrders = itemOrders;
         }
     },
     actions: {
@@ -220,7 +233,7 @@ export default new Vuex.Store({
               { withCredentials: true }
             );
         },
-        async getQRCode({ state }, { userID }) {
+        async getQRCode({ state }) {
             const response = await axios.get(
               `${process.env.VUE_APP_BASE_API}/user/order/${state.user.userID}`,
               { withCredentials: true }
@@ -228,13 +241,31 @@ export default new Vuex.Store({
 
             return response.data.data;
         },
-        async readQRCode({ commit }, { token }) {
+        async readQRCode({ state }, { token }) {
             const response = await axios.get(
               `${process.env.VUE_APP_BASE_API}/user/order/token`,
               { withCredentials: true, headers: { "x-order-token": token } }
             );
 
             return response.data.data;
+        },
+        async registerOrder({ state, commit }, { token }) {
+            const response = await axios.get(
+              `${process.env.VUE_APP_BASE_API}/user/order/register/token`,
+            { withCredentials: true, headers: { "x-order-token": token } }
+            );
+
+            const itemOrder =  response.data.data;
+            commit("SET_ITEM_ORDERS", [...state.itemOrders, itemOrder]);
+            return itemOrder;
+        },
+        async getOrders({ commit }) {
+            const response = await axios.get(
+              `${process.env.VUE_APP_BASE_API}/item/orders`,
+              { withCredentials: true }
+            );
+
+            commit("SET_ITEM_ORDERS", response.data.data);
         }
     },
     modules: {}

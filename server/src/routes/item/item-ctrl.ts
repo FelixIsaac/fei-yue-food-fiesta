@@ -143,6 +143,11 @@ export const getOrders = async (authorization: string) => {
 
     return OrderModel.find({})
       .populate("user", "firstName lastName")
-      .populate("items", "-image")
+      .populate({
+          path: "items",
+          populate: {
+              path: "category"
+          }
+      })
       .exec();
 }

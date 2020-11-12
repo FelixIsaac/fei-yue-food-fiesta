@@ -201,17 +201,44 @@ export const getTokenOrder = async (orderToken: string, authorization: string) =
     if (!user) throw "User not found";
     if (!JWTPayload.admin) throw "Unauthorized to perform this action";
 
+    return {
+        "items": await ItemModel
+          .find({ "_id": { "$in": OrderToken.items } })
+          .populate("category").lean().exec(),
+        "user": {
+            "_id": OrderToken.id,
+            "firstName": user.firstName,
+            "lastName": user.lastName,
+            "fullName": user.fullName,
+            "avatar": user.avatar
+        }
+    };
+};
+
+export const registerOrder = async (orderToken: string, authorization: string) => {
+    const JWTPayload = <IUserJWTToken>jwt.verify(authorization, process.env.JWT_ENCRYPTION_SECRET as string);
+    const OrderToken = <{ id: IUserDocument["_id"], items: IUserDocument["items"] }>
+      jwt.verify(orderToken, process.env.JWT_ENCRYPTION_SECRET as string);
+    const user = await UserModel.findById(OrderToken.id)
+
+    if (!user) throw "User not found";
+    if (!JWTPayload.admin) throw "Unauthorized to perform this action";
+
     if (await OrderModel.exists({ "user": OrderToken.id }))
         await OrderModel.findOneAndRemove({ "user": OrderToken.id });
 
     await new OrderModel({ "user": OrderToken.id, "items": OrderToken.items }).save();
 
     return {
-        "items": await ItemModel.find({ "_id": { "$in": OrderToken.items } }).lean(),
+        "items": await ItemModel
+          .find({ "_id": { "$in": OrderToken.items } })
+          .populate("category").lean().exec(),
         "user": {
-            "id": OrderToken.id,
+            "_id": OrderToken.id,
+            "firstName": user.firstName,
+            "lastName": user.lastName,
             "fullName": user.fullName,
             "avatar": user.avatar
         }
     };
-};
+}

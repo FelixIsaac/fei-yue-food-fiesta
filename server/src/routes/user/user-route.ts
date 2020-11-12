@@ -1,7 +1,5 @@
 import { FastifyError, FastifyInstance, FastifyPluginOptions } from "fastify";
 import * as userController from "./user-ctrl";
-import cookie from "cookie";
-import { unsign } from "cookie-signature";
 import { IUserDocument } from "../../database/models/UserModel";
 import {
     amendUser,
@@ -231,27 +229,26 @@ export default ((server: FastifyInstance, options: FastifyPluginOptions, next: (
         }
     });
 
-    server.get("/orders", { websocket: true }, async (connection: any, request: any) => {
+    server.get<{
+        Headers: { "x-order-token": string }
+    }>("/order/register/token", async (request, reply) => {
         try {
-            type data = String | Buffer | ArrayBuffer | Buffer[];
-            const { token: signedToken = "" } = cookie.parse(request.headers.cookie || "");
-            const token = unsign(signedToken, process.env.COOKIE_SESSION_SECRET as string);
-
-            if (!token) return connection.socket.close(1015, "Unauthorized");
-            if (!(await userController.isAdmin(token))) return connection.socket.close(1015, "Unauthorized");
-
-            connection.socket.on("message", (data: data) => {
-                console.log(server.websocketServer);
-                console.log(data);
-            });
-
-            connection.socket.on("error", (error: Error) => (
-              connection.socket.close(1015, "Unauthorized") && server.log.error(error)
-            ));
+            const data = await userController.registerOrder(request.headers["x-order-token"], reply.unsignCookie(request.cookies.token) as string);
+            reply.send(handleSuccess("Registered order", undefined, data));
         } catch (err) {
-            handleError(err);
-            connection.socket.close(1015, "Unauthorized");
+            const response = handleError(err);
+            reply.status(response.statusCode).send(response);
         }
+    });
+
+    // @ts-ignore
+    server.get("/orders", { websocket: true }, async (connection: any, request: any) => {
+        connection.socket.on('message', (message: string) => {
+            // @ts-ignore
+            server.websocketServer.clients.forEach((client) => {
+                if (client !== connection.socket && client.readyState === 1) client.send(message);
+            })
+        })
     });
 
     next();
